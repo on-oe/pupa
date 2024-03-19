@@ -1,4 +1,5 @@
 # Pupa
+<img width="64" alt="logo" src="./logo.png">
 Your more proactive and understanding copilots.
 
 Welcome to Pupa, an open-source project designed to revolutionize the way you browse and work. In this era of information overload, Pupa emerges as not just an application, but as a proactive and intelligent companion aimed at providing you with a more personalized and anticipatory form of assistance.
