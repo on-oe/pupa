@@ -1,0 +1,25 @@
+{
+  "name": "@pupa/universal",
+  "module": "index.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.js"
+    },
+    "./types": {
+      "import": "./types/index.ts",
+      "require": "./types/index.js"
+    },
+    "./utils": {
+      "import": "./utils/index.ts",
+      "require": "./utils/index.js"
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

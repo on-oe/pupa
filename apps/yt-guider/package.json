@@ -1,0 +1,16 @@
+{
+  "name": "yt-guider",
+  "module": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "@pupa/app": "workspace:*",
+    "openai": "^4.29.2",
+    "youtube-transcript": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

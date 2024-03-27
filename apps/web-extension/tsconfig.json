@@ -1,0 +1,16 @@
+{
+    "extends": "../../tsconfig.json",
+    "include": ["src", "utils"],
+    "exclude": ["node_modules", "build", "dist"],
+    "compilerOptions": {
+        "types": ["chrome"],
+        "baseUrl": ".",
+        "rootDir": ".",
+        "paths": {
+            "@shared/*": ["src/shared/*"],
+            "@host": ["src/host"],
+            "virtual:reload-on-update-in-background-script": ["./src/global.d.ts"],
+            "virtual:reload-on-update-in-view": ["./src/global.d.ts"]
+          }
+    }
+}
