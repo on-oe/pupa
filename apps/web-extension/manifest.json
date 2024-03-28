@@ -1,0 +1,63 @@
+{
+  "manifest_version": 3,
+  "default_locale": "en",
+  "name": "Pupa",
+  "version": "0.0.1",
+  "description": "Your more proactive and understanding copilots.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "sidePanel",
+    "activeTab",
+    "scripting",
+    "declarativeNetRequest",
+    "browsingData",
+    "webRequest",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "side_panel": {
+    "default_path": "src/pages/sidepanel/index.html"
+  },
+  "background": {
+    "service_worker": "src/pages/background/index.ts",
+    "type": "module"
+  },
+  "icons": {
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "src/pages/content/index.ts"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/js/*.js",
+        "assets/css/*.css",
+        "icon-32.png",
+        "icon-48.png",
+        "icon-128.png"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "<all_urls>"
+    ]
+  }
+}

@@ -3,16 +3,14 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit && vite build",
-    "build:watch": "cross-env __DEV__=true vite build -w --mode development",
-    "build:hmr": "rollup --config utils/reload/rollup.config.mjs",
-    "wss": "bun utils/reload/initReloadServer.js",
-    "dev": "pnpm build:hmr && (run-p wss build:watch)"
+    "build": "vite build",
+    "dev": "vite"
   },
   "eslintConfig": {
     "extends": "../../.eslintrc.js"
   },
   "devDependencies": {
+    "@crxjs/vite-plugin": "2.0.0-beta.23",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/chrome": "^0.0.263",
     "@types/node": "^20.11.29",
@@ -20,15 +18,11 @@
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.19",
-    "chokidar": "^3.6.0",
-    "cross-env": "^7.0.3",
-    "npm-run-all": "^4.1.5",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.4.3",
     "vite": "^5.1.6",
-    "vitest": "^1.4.0",
-    "ws": "^8.16.0"
+    "vitest": "^1.4.0"
   },
   "dependencies": {
     "@pupa/universal": "workspace:*",

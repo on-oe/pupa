@@ -8,9 +8,7 @@
         "rootDir": ".",
         "paths": {
             "@shared/*": ["src/shared/*"],
-            "@host": ["src/host"],
-            "virtual:reload-on-update-in-background-script": ["./src/global.d.ts"],
-            "virtual:reload-on-update-in-view": ["./src/global.d.ts"]
+            "@host": ["src/host"]
           }
     }
 }
