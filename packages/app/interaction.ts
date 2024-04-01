@@ -98,11 +98,11 @@ export class InteractionContext {
   async execPageFn(name: string) {
     const filePath = path.join(process.cwd(), "pfn", `${name}.js`);
     const file = Bun.file(filePath);
-    const code = await file.text;
+    const code = await file.text();
     await this.send(
       {
         type: InteractionResponseType.EXECUTE_PAGE_FUNCTION,
-        data: { content: JSON.stringify({ name, code }) },
+        data: { page_fn: { name, code } },
       },
       true,
     );

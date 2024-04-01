@@ -56,7 +56,7 @@ export class Repository {
   async appendInstalledApp(app: Application) {
     const installedApps = await this.getAppsStorage();
     installedApps[app.id] = app;
-    this.storage.set({ installedApps });
+    this.storage.set({ [this.keys.installedApps]: installedApps });
     return app;
   }
 

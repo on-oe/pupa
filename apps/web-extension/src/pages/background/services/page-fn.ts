@@ -17,35 +17,70 @@ const enum PageFnMessageType {
 
 interface PageFnMessage {
   type: PageFnMessageType;
-  data: InteractionData & { channel_id: string; application_id: string };
+  data: {
+    channel_id: string;
+    application_id: string;
+    data: InteractionData;
+  };
 }
 
-const PAGE_FN_EVENT = "page_fn_event";
-
 class PageFnService {
-  private executer = chrome.userScripts;
+  // private executer = chrome.userScripts;
+  private executer = chrome.scripting;
 
   private receiver = chrome.runtime.onUserScriptMessage;
 
+  private readonly USER_SCRIPT_EVENT = "page_fn_event";
+
   constructor() {
+    chrome.userScripts.configureWorld({
+      csp: "script-src 'self' 'unsafe-eval'",
+      messaging: true,
+    });
+
+    chrome.userScripts.register([
+      {
+        id: "pupa",
+        js: [
+          {
+            code: `document.addEventListener("${this.USER_SCRIPT_EVENT}", function(e) { eval(e.detail); });`,
+          },
+        ],
+        matches: ["<all_urls>"],
+        world: "USER_SCRIPT",
+      },
+    ]);
     this.receiver.addListener((message: PageFnMessage) => {
-      if (message.type === PAGE_FN_EVENT) {
+      if (message.type === PageFnMessageType.PAGE_FN_EVENT) {
         fetcher.postPageMessage(
           message.data.application_id,
           message.data.channel_id,
-          message.data,
+          message.data.data,
         );
       }
     });
   }
 
   execute(options: ExecutePageFnOptions) {
-    this.executer.register([
-      {
-        id: options.interaction.id,
-        js: [{ code: assembleJsCode(options) }],
-      },
-    ]);
+    function func(event: string, code: string) {
+      document.dispatchEvent(
+        new CustomEvent(event, {
+          detail: code,
+        }),
+      );
+    }
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      if (!tab?.id) {
+        return;
+      }
+      this.executer.executeScript({
+        target: { tabId: tab.id },
+        func,
+        args: [this.USER_SCRIPT_EVENT, assembleJsCode(options)],
+      });
+    });
   }
 }
 
@@ -62,7 +97,7 @@ function assembleJsCode(options: ExecutePageFnOptions) {
       }
 
       function postResult(result) {
-        const data = { type: result.type, data: { name: "${name}", options: result.options }, channel_id: "${cid}", application_id: "${appid}"};
+        const data = { type: result.type, data: { id: "${name}", name: "${name}", options: result.options }, channel_id: "${cid}", application_id: "${appid}"};
         chrome.runtime.sendMessage({ type: "${PageFnMessageType.PAGE_FN_EVENT}", data });
       }
 

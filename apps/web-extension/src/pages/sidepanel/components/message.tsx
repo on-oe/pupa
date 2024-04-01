@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Select } from "@radix-ui/themes";
+import { Button, Select } from "antd";
 import { parse } from "marked";
 import "github-markdown-css";
 import {
@@ -62,21 +62,18 @@ export function MessageElementComponent({
     case MessageElementType.Button:
       return (
         <div>
-          <Button size="1" onClick={handleBtnClick}>
-            {element.label}
-          </Button>
+          <Button onClick={handleBtnClick}>{element.label}</Button>
         </div>
       );
     case MessageElementType.Select:
       return (
-        <Select.Root size="1" onValueChange={handleSelectChange}>
-          <Select.Trigger placeholder={element.placeholder} />
+        <Select>
           {element.options?.map((option, index) => (
-            <Select.Item key={index} value={option.value}>
+            <Select.Option key={index} value={option.value}>
               {option.label}
-            </Select.Item>
+            </Select.Option>
           ))}
-        </Select.Root>
+        </Select>
       );
   }
 }

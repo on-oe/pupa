@@ -1,16 +1,37 @@
 import { definePageFuncCommand } from "@pupa/app";
 import { OpenAI } from "openai";
-import { YoutubeTranscript, type TranscriptResponse } from "youtube-transcript";
-import { InteractionResponseType } from "../../../packages/universal/types/interaction";
+import { InteractionResponseType } from "@pupa/universal/types";
+import { exec } from "node:child_process";
+
+interface TranscriptResponse {
+  text: string;
+  start: number;
+  duration: number;
+}
 
 const cacheMap = new Map<string, TranscriptResponse[]>();
+
+// cli command: youtube_transcript_api <videoId>
+async function fetchTranscript(videoId: string) {
+  return new Promise<TranscriptResponse[]>((resolve, reject) => {
+    exec(`youtube_transcript_api ${videoId} --format json`, (error, stdout) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        reject(error);
+        return;
+      }
+      const data = JSON.parse(stdout);
+      resolve(data[0]);
+    });
+  });
+}
 
 export async function getTranscript(videoId: string) {
   if (cacheMap.has(videoId)) {
     return cacheMap.get(videoId);
   }
 
-  const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+  const transcript = await fetchTranscript(videoId);
   cacheMap.set(videoId, transcript);
 
   return transcript;
@@ -24,12 +45,12 @@ export async function getTranscriptPart(
   const transcript = await getTranscript(videoId);
   if (!transcript) return "";
   const index = transcript.findIndex((item) => {
-    return (item.offset + item.duration) / 1000 >= offset;
+    return item.start + item.duration >= offset;
   });
   const items = [];
   for (let i = index; i < transcript.length; i++) {
     const item = transcript[i];
-    if (item.offset / 1000 < offset + duration) {
+    if (item.start < offset + duration) {
       items.push(item.text);
     } else {
       break;
@@ -41,9 +62,9 @@ export async function getTranscriptPart(
 
 const client = new OpenAI();
 
-async function summarize(content: string, title: string) {
+export async function summarize(content: string, title: string) {
   const res = await client.chat.completions.create({
-    model: "gpt-3.5-turbo-0125",
+    model: "gpt-3.5-turbo",
     temperature: 0.1,
     //   stream: true,
     messages: [
@@ -61,7 +82,7 @@ async function summarize(content: string, title: string) {
 }
 
 export default definePageFuncCommand({
-  name: "fn-summary",
+  name: "summary",
   description: "概括视频片段内容",
   execute: async (interaction) => {
     if (!interaction.commandOptions) return;
@@ -79,10 +100,9 @@ export default definePageFuncCommand({
       return;
     }
     // interaction.defer({ type: 5 });
-    const content = await summarize(
-      await getTranscriptPart(videoId, time),
-      title,
-    );
+    const transcript = await getTranscriptPart(videoId, time);
+    const content = await summarize(transcript, title);
+    console.log(content);
     if (!content) {
       interaction.reply({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

@@ -9,15 +9,13 @@ import {
   FetchChannelsEvent,
   FetchMessagesEvent,
 } from "@shared/bridge/events/message";
-import { devApp } from "./services/dev-app";
 import { fetcher } from "./services/fetcher";
 
 export const bridge = new BridgeNode();
 
 bridge.addHandler(GetInstalledAppsEvent, async () => {
-  const devApps = await devApp.getInstalledApps();
   const apps = await fetcher.getInstalledApps();
-  return [...devApps, ...apps];
+  return apps;
 });
 
 bridge.addHandler(ExecSlashCommandEvent, (payload) => {
@@ -26,7 +24,7 @@ bridge.addHandler(ExecSlashCommandEvent, (payload) => {
     if (data.id === installDevAppCommand.id) {
       if (!data.options) return false;
       const port = getDataOptionValue<number>(data.options, "port");
-      if (port) devApp.installDevApp(port);
+      fetcher.installApp(`http://localhost:${port}`);
     }
     return false;
   }

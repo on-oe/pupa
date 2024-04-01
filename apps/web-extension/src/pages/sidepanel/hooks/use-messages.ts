@@ -12,10 +12,12 @@ import type {
 } from "@pupa/universal/types";
 import { useEffect, useState } from "react";
 import { ExecSlashCommandEvent } from "@shared/bridge/events/application";
+import { useSnapshot } from "valtio";
 import { bridge } from "../bridge";
+import { messageStore } from "../store";
 
 export function useMessages() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const messageState = useSnapshot(messageStore.state);
   const [channels, setChannel] = useState<Channel[]>([]);
   const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
 
@@ -41,7 +43,7 @@ export function useMessages() {
       const messages = await bridge.send<Message[]>(
         FetchMessagesEvent.create({ channelId }),
       );
-      setMessages(messages);
+      messageStore.updateMessages(messages);
     };
 
     if (currentChannel) {
@@ -77,7 +79,7 @@ export function useMessages() {
     channels,
     currentChannel,
     setCurrentChannel,
-    messages,
+    messages: messageState.messages,
     sendMessage,
     sendSlashCommand,
   } as const;

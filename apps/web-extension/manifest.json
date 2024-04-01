@@ -13,7 +13,7 @@
     "declarativeNetRequest",
     "browsingData",
     "webRequest",
-    "nativeMessaging"
+    "userScripts"
   ],
   "host_permissions": [
     "<all_urls>"

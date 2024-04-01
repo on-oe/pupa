@@ -6,11 +6,6 @@ import {
 import type { InteractionHost } from "./irc-host";
 import { createChannel, type Repository } from "./repository";
 
-function getApp(id: string): Promise<Application> {
-  console.log("getApp", id);
-  throw new Error("Not implemented");
-}
-
 export class FetchHost {
   constructor(
     private repository: Repository,
@@ -49,7 +44,12 @@ export class FetchHost {
   }
 
   async installApp(id: string) {
-    const app = await getApp(id);
+    const endpoint = id;
+    const app = (await fetch(`${endpoint}/install`).then((res) =>
+      res.json(),
+    )) as Application;
+    app.dev = true;
+    app.interactions_endpoint_url = endpoint;
     await this.appendInstalledApp(app);
     return app;
   }

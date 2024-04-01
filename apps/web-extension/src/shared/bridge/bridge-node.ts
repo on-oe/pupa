@@ -5,6 +5,10 @@ export class BridgeNode {
 
   private handlers: Record<string, (data: unknown) => unknown> = {};
 
+  constructor() {
+    this.connect();
+  }
+
   addHandler<D>(Event: BridgeEvent<D>, handler: (data: D) => unknown) {
     this.handlers[Event.type] = handler as (data: unknown) => unknown;
   }
@@ -18,7 +22,15 @@ export class BridgeNode {
     return this.handlers[type](data);
   }
 
-  connect() {
+  send<R>(event: BridgeEventPayload): Promise<R> {
+    return new Promise((resolve) => {
+      this.sendMessage(event, (response) => {
+        resolve(response);
+      });
+    });
+  }
+
+  private connect() {
     chrome.runtime.onMessage.addListener(
       (event: BridgeEventPayload, sender, sendResponse) => {
         const { type, data } = event;
@@ -29,13 +41,5 @@ export class BridgeNode {
         return true;
       },
     );
-  }
-
-  send<R>(event: BridgeEventPayload): Promise<R> {
-    return new Promise((resolve) => {
-      this.sendMessage(event, (response) => {
-        resolve(response);
-      });
-    });
   }
 }

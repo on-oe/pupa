@@ -19,9 +19,13 @@ export function useApplication() {
       const applications = await bridge.send<Application[]>(
         GetInstalledAppsEvent.create(),
       );
-      fetchCommands(applications).then((apps) => {
-        setApplications([...apps, builtInAppWithCommands]);
-      });
+      fetchCommands(applications)
+        .then((apps) => {
+          setApplications([...apps, builtInAppWithCommands]);
+        })
+        .catch(() => {
+          setApplications([builtInAppWithCommands]);
+        });
     };
 
     fetchApplication();

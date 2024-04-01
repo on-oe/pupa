@@ -4,8 +4,9 @@
   "type": "module",
   "dependencies": {
     "@pupa/app": "workspace:*",
+    "@pupa/universal": "workspace:*",
     "openai": "^4.29.2",
-    "youtube-transcript": "^1.1.0"
+    "youtube-transcript": "1.0.6"
   },
   "devDependencies": {
     "@types/bun": "latest"

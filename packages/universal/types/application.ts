@@ -4,6 +4,7 @@ export interface Application {
   description: string;
   icon: string;
   interactions_endpoint_url: string;
+  dev?: boolean;
 }
 
 export interface ApplicationWithCommands extends Application {
@@ -39,6 +40,7 @@ export const enum CommandOptionType {
 export interface CommandOption {
   name: string;
   type: CommandOptionType;
+  description: string;
   required?: boolean;
   options?: CommandOption[];
 }

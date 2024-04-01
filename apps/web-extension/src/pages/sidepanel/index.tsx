@@ -1,8 +1,7 @@
 import { createRoot } from "react-dom/client";
-import { Theme } from "@radix-ui/themes";
+import { ConfigProvider } from "antd";
 import App from "./app";
 import "./index.css";
-import "@radix-ui/themes/styles.css";
 
 function init() {
   const appContainer = document.querySelector("#app-container");
@@ -11,9 +10,19 @@ function init() {
   }
   const root = createRoot(appContainer);
   root.render(
-    <Theme>
+    <ConfigProvider
+      theme={{
+        components: {
+          List: {
+            itemPaddingSM: "4px 8px",
+            avatarMarginRight: 8,
+            descriptionFontSize: 12,
+          },
+        },
+      }}
+    >
       <App />
-    </Theme>,
+    </ConfigProvider>,
   );
 }
 

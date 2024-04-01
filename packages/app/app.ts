@@ -36,10 +36,12 @@ class App {
   async serve(port = 6700) {
     await this.loadCommands();
     this.run(port);
+    console.log("App is running on port", port);
   }
 
   private run(port: number) {
     const appOptions = this.options;
+
     Bun.serve({
       port,
       fetch: (req) => {
@@ -72,17 +74,20 @@ class App {
           });
         }
 
-        const params = Object.fromEntries(
-          url.searchParams.entries(),
-        ) as unknown as Interaction;
+        const bodyStr = url.searchParams.get("body");
+        if (!bodyStr) {
+          return new Response("Bad Request", {
+            status: 400,
+          });
+        }
+
+        const ircData = JSON.parse(bodyStr) as unknown as Interaction;
 
         const stream = new ReadableStream({
           start: (controller) => {
             const close = () => {
-              if (controller.desiredSize === 0) {
-                controller.close();
-                clearTimeout(timeout);
-              }
+              controller.close();
+              clearTimeout(timeout);
             };
 
             const timeout = setTimeout(() => {
@@ -102,7 +107,7 @@ class App {
               });
             };
 
-            const interaction = new InteractionContext(params, send);
+            const interaction = new InteractionContext(ircData, send);
             const commander = this.getCommander(interaction);
             commander?.execute(interaction);
           },

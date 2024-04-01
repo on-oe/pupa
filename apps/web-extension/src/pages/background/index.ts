@@ -1,11 +1,9 @@
-import { bridge } from "./bridge";
+import "./services/socker";
 
 function main() {
-  bridge.connect();
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((error) => console.error(error));
 }
 
 main();
-
-chrome.sidePanel
-  .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch((error) => console.error(error));
