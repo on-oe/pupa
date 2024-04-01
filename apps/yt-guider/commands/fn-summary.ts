@@ -1,37 +1,23 @@
 import { definePageFuncCommand } from "@pupa/app";
 import { OpenAI } from "openai";
 import { InteractionResponseType } from "@pupa/universal/types";
-import { exec } from "node:child_process";
-
-interface TranscriptResponse {
-  text: string;
-  start: number;
-  duration: number;
-}
+import { YoutubeTranscript, type TranscriptResponse } from "youtube-transcript";
 
 const cacheMap = new Map<string, TranscriptResponse[]>();
-
-// cli command: youtube_transcript_api <videoId>
-async function fetchTranscript(videoId: string) {
-  return new Promise<TranscriptResponse[]>((resolve, reject) => {
-    exec(`youtube_transcript_api ${videoId} --format json`, (error, stdout) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        reject(error);
-        return;
-      }
-      const data = JSON.parse(stdout);
-      resolve(data[0]);
-    });
-  });
-}
 
 export async function getTranscript(videoId: string) {
   if (cacheMap.has(videoId)) {
     return cacheMap.get(videoId);
   }
 
-  const transcript = await fetchTranscript(videoId);
+  let transcript = await YoutubeTranscript.fetchTranscript(videoId);
+  transcript = transcript.map((item) => {
+    return {
+      text: item.text,
+      offset: item.offset / 1000,
+      duration: item.duration / 1000,
+    };
+  });
   cacheMap.set(videoId, transcript);
 
   return transcript;
@@ -45,12 +31,12 @@ export async function getTranscriptPart(
   const transcript = await getTranscript(videoId);
   if (!transcript) return "";
   const index = transcript.findIndex((item) => {
-    return item.start + item.duration >= offset;
+    return item.offset + item.duration >= offset;
   });
   const items = [];
   for (let i = index; i < transcript.length; i++) {
     const item = transcript[i];
-    if (item.start < offset + duration) {
+    if (item.offset < offset + duration) {
       items.push(item.text);
     } else {
       break;
@@ -102,7 +88,6 @@ export default definePageFuncCommand({
     // interaction.defer({ type: 5 });
     const transcript = await getTranscriptPart(videoId, time);
     const content = await summarize(transcript, title);
-    console.log(content);
     if (!content) {
       interaction.reply({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
