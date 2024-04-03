@@ -6,6 +6,8 @@ import {
 import { builtInApplication, installDevAppCommand } from "@shared/built-in-app";
 import { getDataOptionValue } from "@pupa/universal/utils";
 import {
+  AddChannelEvent,
+  DeleteChannelEvent,
   FetchChannelsEvent,
   FetchMessagesEvent,
 } from "@shared/bridge/events/message";
@@ -37,4 +39,12 @@ bridge.addHandler(FetchChannelsEvent, () => {
 
 bridge.addHandler(FetchMessagesEvent, (payload) => {
   return fetcher.getMessages(payload.channelId);
+});
+
+bridge.addHandler(AddChannelEvent, () => {
+  return fetcher.addChannel();
+});
+
+bridge.addHandler(DeleteChannelEvent, (payload) => {
+  return fetcher.deleteChannel(payload.channelId);
 });

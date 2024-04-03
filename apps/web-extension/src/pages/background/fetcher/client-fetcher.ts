@@ -37,4 +37,12 @@ export class ClientFetcher extends BaseAbortFetcher implements BaseFetcher {
   getMessages(channelId: string): Promise<Message[]> {
     return this.host.getMessages(channelId);
   }
+
+  addChannel() {
+    return this.host.addChannel();
+  }
+
+  deleteChannel(channelId: string) {
+    return this.host.deleteChannel(channelId);
+  }
 }

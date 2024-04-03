@@ -6,6 +6,8 @@ export interface Message {
   channel_id: string;
   author: User;
   type: MessageType;
+  created_at: number;
+  updated_at?: number;
   elements?: MessageElement[];
   bot?: boolean;
 }

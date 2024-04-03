@@ -37,18 +37,47 @@ export class Repository {
   }
 
   async getChannels(): Promise<Channel[]> {
-    const channels = await this.getChannelsStorage();
-    return Object.values(channels);
+    const storage = await this.getChannelsStorage();
+    let channels = Object.values(storage);
+    const getLastMessage = async (id: string, msgId: string) => {
+      const messages = await this.getMessageStorage(id);
+      return messages[msgId];
+    };
+    channels = await Promise.all(
+      channels.map(async (channel) => {
+        if (channel.last_message_id) {
+          const lastMessage = await getLastMessage(
+            channel.id,
+            channel.last_message_id,
+          );
+          return { ...channel, last_message: lastMessage };
+        }
+        return channel;
+      }),
+    );
+    return channels.sort(
+      (a, b) => (b.updated_at || b.created_at) - (a.updated_at || b.created_at),
+    );
   }
 
   async getChannel(id: string): Promise<Channel | undefined> {
     const channels = await this.getChannelsStorage();
-    return channels[id];
+    const channel = channels[id];
+    if (channel.last_message_id) {
+      const messages = await this.getMessageStorage(id);
+      return { ...channel, last_message: messages[channel.last_message_id] };
+    }
+    return channel;
   }
 
   async createChannel(channel: Channel) {
     const channels = await this.getChannelsStorage();
-    channels[channel.id] = channel;
+    channels[channel.id] = {
+      id: channel.id,
+      name: channel.name || "New Chat",
+      created_at: Date.now(),
+      last_message_id: channel.last_message?.id,
+    };
     this.storage.set({ [this.keys.channels]: channels });
     return channel;
   }
@@ -69,8 +98,23 @@ export class Repository {
     const { channel_id: channelId } = message;
     const messages = await this.getMessageStorage(channelId);
     messages[message.id] = message;
-    this.storage.set({ [getMessageStorageKey(channelId)]: messages });
+    this.updateChannel(channelId, { last_message_id: message.id });
+    this.storage.set({
+      [getMessageStorageKey(channelId)]: messages,
+    });
     return message;
+  }
+
+  async updateChannel(id: string, data: Partial<ChannelTable>) {
+    const channels = await this.getChannelsStorage();
+    channels[id] = { ...channels[id], ...data, updated_at: Date.now() };
+    this.storage.set({ [this.keys.channels]: channels });
+  }
+
+  async deleteChannel(id: string) {
+    const channels = await this.getChannelsStorage();
+    delete channels[id];
+    this.storage.set({ [this.keys.channels]: channels });
   }
 
   private async getMessageStorage(
@@ -86,7 +130,7 @@ export class Repository {
     return res[this.keys.installedApps] ?? {};
   }
 
-  private async getChannelsStorage(): Promise<Record<string, Channel>> {
+  private async getChannelsStorage(): Promise<Record<string, ChannelTable>> {
     const res = await this.storage.get(this.keys.channels);
     return res[this.keys.channels] ?? {};
   }
@@ -123,11 +167,21 @@ export function createMessage(data: {
     id: createId(),
     type: data.type ?? MessageType.DEFAULT,
     channel_id: data.channelId,
+    created_at: Date.now(),
   };
 }
 
 export function createChannel(): Channel {
   return {
     id: createId(),
+    created_at: Date.now(),
   };
+}
+
+interface ChannelTable {
+  id: string;
+  name: string;
+  created_at: number;
+  updated_at?: number;
+  last_message_id?: string;
 }

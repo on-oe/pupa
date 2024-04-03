@@ -12,6 +12,10 @@ export interface BaseFetcher {
 
   getChannels(): Promise<Channel[]>;
 
+  addChannel(): Promise<Channel>;
+
+  deleteChannel(channelId: string): Promise<void>;
+
   getMessages(channelId: string): Promise<Message[]>;
 
   execSlashCommand(

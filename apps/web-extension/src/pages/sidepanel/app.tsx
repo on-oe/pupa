@@ -1,24 +1,38 @@
 import withSuspense from "@shared/hoc/withSuspense";
 import withErrorBoundary from "@shared/hoc/withErrorBoundary";
 import { useEffect, useRef, useState } from "react";
-import { Button, Avatar, Popover, List, Tag } from "antd";
-import { SendOutlined, FileAddOutlined } from "@ant-design/icons";
+import { Button, Avatar, Popover, List, Tag, Drawer } from "antd";
+import {
+  SendOutlined,
+  FileAddOutlined,
+  HistoryOutlined,
+  PlusSquareFilled,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import {
   type CommandOption,
   type ApplicationWithCommands,
   type Command,
-  type Message,
 } from "@pupa/universal/types";
+import { useSnapshot } from "valtio";
 import { useMessages } from "./hooks/use-messages";
 import { useApplication } from "./hooks/use-application";
 import { MessageComponent } from "./components/message";
+import { channelStore, messageStore } from "./store";
 
 type CommandOptionItem = { app: ApplicationWithCommands } & Command;
 
 function App() {
   const [input, setInput] = useState("");
   const { applications } = useApplication();
-  const { messages, sendMessage, sendSlashCommand } = useMessages();
+  const {
+    currentChannel,
+    setCurrentChannel,
+    addChannel,
+    sendSlashCommand,
+    delChannel,
+  } = useMessages();
   const [isShowApps, setIsShowApps] = useState(false);
   const [preSelectedAppIndex, setPreSelectedAppIndex] = useState<number>(0);
   const [isShowCmds, setIsShowCmds] = useState(false);
@@ -35,6 +49,9 @@ function App() {
   const [dataOptions, setDataOptions] = useState<
     (CommandOption & { value: string })[]
   >([]);
+  const [isOPenHistory, setIsOpenHistory] = useState(false);
+  const { channels } = useSnapshot(channelStore.state);
+  const { messages } = useSnapshot(messageStore.state);
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -198,6 +215,24 @@ function App() {
     }
   }
 
+  function handleAddChannelClick() {
+    if (currentChannel) addChannel();
+  }
+
+  function onChannelChange(channelId: string) {
+    setCurrentChannel(channelStore.getChannelById(channelId));
+  }
+
+  function onSelectChatHistory(channelId: string) {
+    onChannelChange(channelId);
+    setIsOpenHistory(false);
+  }
+
+  function handleDelChannel(e: React.MouseEvent, channelId: string) {
+    e.stopPropagation();
+    delChannel(channelId);
+  }
+
   const AppMenu = (
     <List size="small" split={false}>
       {applications.map((app, i) => (
@@ -248,8 +283,9 @@ function App() {
   return (
     <div className=" w-screen h-screen bg-default-100 p-1">
       <div className="w-full h-full rounded-xl bg-white flex flex-col">
+        <h2 className="text-xl">{currentChannel?.name || "New Chat"}</h2>
         <div className="flex-1 pb-9 overflow-auto p-2">
-          {messages.map((message) => (
+          {messages.map((message, i) => (
             <div key={message.id} className="flex p-4">
               <div className="mr-[6px]">
                 <Avatar
@@ -261,13 +297,29 @@ function App() {
                 <div className="text-xs font-semibold text-gray-600">
                   {message.author.username}
                 </div>
-                <MessageComponent message={message as unknown as Message} />
+                <MessageComponent message={messageStore.state.messages[i]} />
               </div>
             </div>
           ))}
           <div ref={endOfMessagesRef} />
         </div>
         <div className="relative px-2 pb-1 pt-4 text-sm">
+          <div className=" flex justify-between items-center">
+            <div>
+              <Button
+                icon={<HistoryOutlined />}
+                type="link"
+                size="small"
+                onClick={() => setIsOpenHistory(true)}
+              />
+              <Button
+                icon={<PlusSquareFilled />}
+                type="link"
+                size="small"
+                onClick={handleAddChannelClick}
+              />
+            </div>
+          </div>
           <Popover
             open={isShowApps || isShowCmds}
             overlayClassName="w-[calc(100%-24px)]"
@@ -349,6 +401,41 @@ function App() {
           </Popover>
         </div>
       </div>
+      <Drawer
+        placement="bottom"
+        title="Chat History"
+        size="large"
+        open={isOPenHistory}
+        onClose={() => setIsOpenHistory(false)}
+      >
+        <List>
+          {channels.map((channel) => (
+            <List.Item
+              className="cursor-pointer hover:bg-slate-200"
+              key={channel.id}
+              onClick={() => onSelectChatHistory(channel.id)}
+              actions={[
+                <Button size="small" icon={<EditOutlined />} key="edit" />,
+                <Button
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  key="del"
+                  onClick={(e) => handleDelChannel(e, channel.id)}
+                />,
+              ]}
+            >
+              <List.Item.Meta
+                title={channel.name}
+                description={
+                  <div className="text-ellipsis overflow-hidden whitespace-nowrap">
+                    {channel.last_message?.content || "New Chat"}
+                  </div>
+                }
+              />
+            </List.Item>
+          ))}
+        </List>
+      </Drawer>
     </div>
   );
 }

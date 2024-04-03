@@ -1,5 +1,7 @@
 import {
+  AddChannelEvent,
   CreateMessageEvent,
+  DeleteChannelEvent,
   FetchChannelsEvent,
   FetchMessagesEvent,
 } from "@shared/bridge/events/message";
@@ -12,31 +14,21 @@ import type {
 } from "@pupa/universal/types";
 import { useEffect, useState } from "react";
 import { ExecSlashCommandEvent } from "@shared/bridge/events/application";
-import { useSnapshot } from "valtio";
 import { bridge } from "../bridge";
-import { messageStore } from "../store";
+import { channelStore, messageStore } from "../store";
 
 export function useMessages() {
-  const messageState = useSnapshot(messageStore.state);
-  const [channels, setChannel] = useState<Channel[]>([]);
   const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
 
   useEffect(() => {
     const fetchChannel = async () => {
-      const channels = await bridge.send<Channel[]>(
-        FetchChannelsEvent.create(),
-      );
-      setChannel(channels);
+      const list = await bridge.send<Channel[]>(FetchChannelsEvent.create());
+      channelStore.setChannels(list);
+      setCurrentChannel(channelStore.lastChannel);
     };
 
     fetchChannel();
   }, []);
-
-  useEffect(() => {
-    if (channels.length > 0 && !currentChannel) {
-      setCurrentChannel(channels[channels.length - 1]);
-    }
-  }, [channels, currentChannel]);
 
   useEffect(() => {
     const fetchMessages = async (channelId: string) => {
@@ -48,6 +40,8 @@ export function useMessages() {
 
     if (currentChannel) {
       fetchMessages(currentChannel.id);
+    } else {
+      messageStore.updateMessages([]);
     }
   }, [currentChannel]);
 
@@ -57,16 +51,21 @@ export function useMessages() {
     );
   }
 
-  function sendSlashCommand(data: {
-    application: Application;
-    command: Command;
-    options: InteractionDataOption[];
-  }) {
-    if (!currentChannel) return;
+  async function sendSlashCommand(data: SlashCommandData) {
+    if (!currentChannel) {
+      const channel = await bridge.send<Channel>(AddChannelEvent.create());
+      setCurrentChannel(channel);
+      onSlashCommand(data, channel);
+    } else {
+      onSlashCommand(data, currentChannel);
+    }
+  }
+
+  function onSlashCommand(data: SlashCommandData, channel: Channel) {
     bridge.send(
       ExecSlashCommandEvent.create({
         applicationId: data.application.id,
-        channelId: currentChannel.id,
+        channelId: channel.id,
         data: {
           ...data.command,
           options: data.options,
@@ -75,12 +74,28 @@ export function useMessages() {
     );
   }
 
+  function addChannel() {
+    setCurrentChannel(null);
+  }
+
+  async function delChannel(channelId: string) {
+    await bridge.send(DeleteChannelEvent.create({ channelId }));
+    channelStore.deleteChannel(channelId);
+    setCurrentChannel(channelStore.lastChannel);
+  }
+
   return {
-    channels,
     currentChannel,
     setCurrentChannel,
-    messages: messageState.messages,
     sendMessage,
     sendSlashCommand,
+    addChannel,
+    delChannel,
   } as const;
+}
+
+interface SlashCommandData {
+  application: Application;
+  command: Command;
+  options: InteractionDataOption[];
 }

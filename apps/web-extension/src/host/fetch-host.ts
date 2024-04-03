@@ -60,11 +60,15 @@ export class FetchHost {
 
   async getChannels() {
     const channels = await this.repository.getChannels();
-    if (channels.length === 0) {
-      const channel = await this.repository.createChannel(createChannel());
-      return [channel];
-    }
     return channels;
+  }
+
+  addChannel() {
+    return this.repository.createChannel(createChannel());
+  }
+
+  deleteChannel(channelId: string) {
+    return this.repository.deleteChannel(channelId);
   }
 
   async getMessages(channelId: string) {
