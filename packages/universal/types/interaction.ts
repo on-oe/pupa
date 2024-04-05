@@ -14,6 +14,7 @@ export interface Interaction {
   data?: InteractionData;
   user?: User;
   message?: Message;
+  created_at: number;
 }
 
 export const enum InteractionType {

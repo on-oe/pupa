@@ -20,10 +20,31 @@ export class Repository {
   private keys = {
     installedApps: "host:installed_apps",
     channels: "host:channels",
+    interactions: "host:interactions",
   };
 
   constructor() {
     this.storage = chrome.storage.local;
+  }
+
+  async createInteraction(
+    type: InteractionType,
+    app: Application,
+    channelId: string,
+    data?: InteractionData,
+  ): Promise<Interaction> {
+    const interaction: Interaction = {
+      id: createId(),
+      application_id: app.id,
+      type,
+      channel_id: channelId,
+      data,
+      created_at: Date.now(),
+    };
+    const interactions = await this.getInteractionsStorage();
+    interactions[interaction.id] = interaction;
+    await this.storage.set({ [this.keys.interactions]: interactions });
+    return interaction;
   }
 
   async getInstalledApps(): Promise<Application[]> {
@@ -135,25 +156,15 @@ export class Repository {
     const res = await this.storage.get(this.keys.channels);
     return res[this.keys.channels] ?? {};
   }
+
+  private async getInteractionsStorage(): Promise<Record<string, Interaction>> {
+    const res = await this.storage.get(this.keys.interactions);
+    return res[this.keys.interactions] ?? {};
+  }
 }
 
 function createId() {
   return Math.random().toString(36).slice(2);
-}
-
-export function createInteraction(
-  type: InteractionType,
-  app: Application,
-  channelId: string,
-  data?: InteractionData,
-): Interaction {
-  return {
-    id: createId(),
-    type,
-    application_id: app.id,
-    channel_id: channelId,
-    data,
-  };
 }
 
 export function createMessage(data: {
