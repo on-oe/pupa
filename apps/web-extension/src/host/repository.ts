@@ -139,6 +139,13 @@ export class Repository {
     this.storage.set({ [this.keys.channels]: channels });
   }
 
+  async updateApp(id: string, data: Partial<Application>) {
+    const apps = await this.getAppsStorage();
+    apps[id] = { ...apps[id], ...data };
+    await this.storage.set({ [this.keys.installedApps]: apps });
+    return apps[id];
+  }
+
   private async getMessageStorage(
     channelId: string,
   ): Promise<Record<string, Message>> {

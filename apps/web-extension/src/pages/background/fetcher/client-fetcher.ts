@@ -30,6 +30,10 @@ export class ClientFetcher extends BaseAbortFetcher implements BaseFetcher {
     return this.host.getInstalledApps();
   }
 
+  updateInstalledApps() {
+    return this.host.updateInstalledApps();
+  }
+
   getChannels() {
     return this.host.getChannels();
   }

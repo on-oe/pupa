@@ -8,3 +8,7 @@ export const ExecSlashCommandEvent = defineBridgeEvent<{
   channelId: string;
   data: InteractionData;
 }>("ExecSlashCommand");
+
+export const RefreshInstalledAppsEvent = defineBridgeEvent(
+  "RefreshInstalledApps",
+);

@@ -3,8 +3,7 @@ import {
   ExecSlashCommandEvent,
   GetInstalledAppsEvent,
 } from "@shared/bridge/events/application";
-import { builtInApplication, installDevAppCommand } from "@shared/built-in-app";
-import { getDataOptionValue } from "@pupa/universal/utils";
+import { builtInApplication } from "@shared/built-in-app";
 import {
   AddChannelEvent,
   DeleteChannelEvent,
@@ -12,6 +11,7 @@ import {
   FetchMessagesEvent,
 } from "@shared/bridge/events/message";
 import { fetcher } from "./services/fetcher";
+import { builtIn } from "./services/built-in";
 
 export const bridge = new BridgeNode();
 
@@ -23,11 +23,7 @@ bridge.addHandler(GetInstalledAppsEvent, async () => {
 bridge.addHandler(ExecSlashCommandEvent, (payload) => {
   const { data, applicationId, channelId } = payload;
   if (applicationId === builtInApplication.id) {
-    if (data.id === installDevAppCommand.id) {
-      if (!data.options) return false;
-      const port = getDataOptionValue<number>(data.options, "port");
-      fetcher.installApp(`http://localhost:${port}`);
-    }
+    builtIn.executeCommand(data);
     return false;
   }
   return fetcher.execSlashCommand(applicationId, channelId, data);

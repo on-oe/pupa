@@ -11,6 +11,8 @@ export interface BaseFetcher {
 
   getInstalledApps(): Promise<Application[]>;
 
+  updateInstalledApps(): Promise<Application[]>;
+
   getChannels(): Promise<Channel[]>;
 
   addChannel(): Promise<Channel>;

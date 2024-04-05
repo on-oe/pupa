@@ -27,7 +27,14 @@ export const installDevAppCommand = {
   ],
 };
 
-export const builtInCommands = [installDevAppCommand];
+export const updateDevAppCommand = {
+  id: "2",
+  name: "update dev app",
+  description: "Update a dev app",
+  type: CommandType.CHAT_INPUT,
+};
+
+export const builtInCommands = [installDevAppCommand, updateDevAppCommand];
 
 export const builtInAppWithCommands = {
   ...builtInApplication,

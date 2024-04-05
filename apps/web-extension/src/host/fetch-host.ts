@@ -45,13 +45,32 @@ export class FetchHost {
 
   async installApp(id: string) {
     const endpoint = id;
-    const app = (await fetch(`${endpoint}/install`).then((res) =>
-      res.json(),
-    )) as Application;
+    const app = await getAppInfo(endpoint);
     app.dev = true;
     app.interactions_endpoint_url = endpoint;
     await this.appendInstalledApp(app);
     return app;
+  }
+
+  async updateApp(id: string) {
+    const app = await this.repository.getInstalledApp(id);
+    if (!app) {
+      throw new Error("App not found");
+    }
+    const newApp = await getAppInfo(app.interactions_endpoint_url);
+    if (newApp.id !== app.id) {
+      throw new Error("App id mismatch");
+    }
+    const updated = await this.repository.updateApp(app.id, newApp);
+    return updated;
+  }
+
+  async updateInstalledApps() {
+    const apps = await this.getInstalledApps();
+    const newApps = await Promise.all(
+      apps.map((app) => this.updateApp(app.id)),
+    );
+    return newApps;
   }
 
   getInstalledApps() {
@@ -79,4 +98,8 @@ export class FetchHost {
     await this.repository.appendInstalledApp(app);
     return app;
   }
+}
+
+function getAppInfo(endpoint: string): Promise<Application> {
+  return fetch(`${endpoint}/install`).then((res) => res.json());
 }

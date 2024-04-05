@@ -1,9 +1,7 @@
 import withSuspense from "@shared/hoc/withSuspense";
 import withErrorBoundary from "@shared/hoc/withErrorBoundary";
 import { useEffect } from "react";
-import type { Application, Channel, Command } from "@pupa/universal/types";
-import { GetInstalledAppsEvent } from "@shared/bridge/events/application";
-import { builtInAppWithCommands } from "@shared/built-in-app";
+import type { Channel } from "@pupa/universal/types";
 import { FetchChannelsEvent } from "@shared/bridge/events/message";
 import { CommandInput } from "./command-input";
 import { ChatHistory } from "./chat-history";
@@ -13,35 +11,9 @@ import { bridge } from "../../bridge";
 import { applicationStore, channelStore } from "../../store";
 import { store } from "./store";
 
-function fetchCommand(app: Application): Promise<Command[]> {
-  const url = app.interactions_endpoint_url;
-  return fetch(`${url}/commands`).then((res) => res.json());
-}
-
-async function fetchCommands(apps: Application[]) {
-  const list = await Promise.all(apps.map(fetchCommand));
-  return list.map((commands, i) => ({
-    ...apps[i],
-    commands,
-  }));
-}
-
 function App() {
   useEffect(() => {
-    const fetchApplication = async () => {
-      const apps = await bridge.send<Application[]>(
-        GetInstalledAppsEvent.create(),
-      );
-      fetchCommands(apps)
-        .then((apps) => {
-          applicationStore.update([...apps, builtInAppWithCommands]);
-        })
-        .catch(() => {
-          applicationStore.update([builtInAppWithCommands]);
-        });
-    };
-
-    fetchApplication();
+    applicationStore.fetchApplications();
   }, []);
 
   useEffect(() => {
