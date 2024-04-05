@@ -127,7 +127,7 @@ export class Repository {
     return message;
   }
 
-  async updateChannel(id: string, data: Partial<ChannelTable>) {
+  async updateChannel(id: string, data: Partial<StoredChannel>) {
     const channels = await this.getChannelsStorage();
     channels[id] = { ...channels[id], ...data, updated_at: Date.now() };
     this.storage.set({ [this.keys.channels]: channels });
@@ -159,7 +159,7 @@ export class Repository {
     return res[this.keys.installedApps] ?? {};
   }
 
-  private async getChannelsStorage(): Promise<Record<string, ChannelTable>> {
+  private async getChannelsStorage(): Promise<Record<string, StoredChannel>> {
     const res = await this.storage.get(this.keys.channels);
     return res[this.keys.channels] ?? {};
   }
@@ -198,7 +198,7 @@ export function createChannel(): Channel {
   };
 }
 
-interface ChannelTable {
+interface StoredChannel {
   id: string;
   name: string;
   created_at: number;
