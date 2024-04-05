@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { proxy } from "valtio";
+import { watch } from "valtio/utils";
 
 type State = Record<string, any>;
 type Action<S> = (state: S, ...args: any[]) => any;
@@ -43,8 +44,13 @@ export function createStore<
 
   if (getters) {
     Object.keys(getters).forEach((getterKey) => {
+      const item = proxy({ value: getters[getterKey](state) });
+      watch((get) => {
+        get(proxyState);
+        item.value = getters[getterKey](proxyState);
+      });
       Object.defineProperty(store, getterKey, {
-        get: () => getters[getterKey](proxyState),
+        get: () => item.value,
         enumerable: true,
       });
     });
