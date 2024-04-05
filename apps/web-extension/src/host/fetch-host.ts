@@ -21,7 +21,7 @@ export class FetchHost {
     data: InteractionData,
   ) {
     const app = await this.repository.getInstalledApp(applicationId);
-    this.ircHost.post(
+    return this.ircHost.post(
       InteractionType.APPLICATION_COMMAND,
       app!,
       channelId,
@@ -35,7 +35,7 @@ export class FetchHost {
     data: InteractionData,
   ) {
     const app = await this.repository.getInstalledApp(applicationId);
-    this.ircHost.post(
+    return this.ircHost.post(
       InteractionType.PAGE_FUNCTION_MESSAGE,
       app!,
       channelId,

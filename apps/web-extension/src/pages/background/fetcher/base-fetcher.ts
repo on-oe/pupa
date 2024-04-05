@@ -3,6 +3,7 @@ import type {
   InteractionData,
   Channel,
   Message,
+  Interaction,
 } from "@pupa/universal/types";
 
 export interface BaseFetcher {
@@ -22,7 +23,7 @@ export interface BaseFetcher {
     applicationId: string,
     channelId: string,
     data: InteractionData,
-  ): Promise<void>;
+  ): Promise<Interaction>;
 
   postPageMessage(
     applicationId: string,

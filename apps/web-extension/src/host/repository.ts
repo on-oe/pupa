@@ -90,8 +90,9 @@ export class Repository {
   }
 
   async getMessages(channelId: string): Promise<Message[]> {
-    const messages = await this.getMessageStorage(channelId);
-    return Object.values(messages);
+    const storage = await this.getMessageStorage(channelId);
+    const messages = Object.values(storage);
+    return messages.sort((a, b) => a.created_at - b.created_at);
   }
 
   async appendMessage(message: Message) {
@@ -161,6 +162,7 @@ export function createMessage(data: {
   author: User;
   type?: MessageType;
   components?: MessageElement[];
+  interaction_id?: string;
 }): Message {
   return {
     ...data,

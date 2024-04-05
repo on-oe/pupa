@@ -37,6 +37,8 @@ module.exports = {
     "react/prop-types": "off",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
+    "react/require-default-props": "off",
+    "react/jsx-props-no-spreading": "warn",
     "prettier/prettier": "error",
     "no-use-before-define": "off",
     "import/no-extraneous-dependencies": "off",
@@ -48,6 +50,7 @@ module.exports = {
     "default-case": "off",
     "@typescript-eslint/consistent-type-imports": "error",
     "no-plusplus": "off",
+    "no-param-reassign": ["error", { props: false }],
   },
   settings: {
     react: {

@@ -1,18 +1,15 @@
 import type { Message } from "@pupa/universal/types";
-import { proxy } from "valtio";
+import { createStore } from "./store";
 
-const state = proxy({
-  messages: [] as Message[],
+export const messageStore = createStore({
+  state: { messages: [] as Message[] },
+  actions: {
+    addMessage: (state, message: Message) => {
+      state.messages.push(message);
+    },
+    updateMessages: (state, messages: Message[]) => {
+      Object.assign(state, { messages });
+    },
+    getMessageByIndex: (state, index: number) => state.messages[index],
+  },
 });
-
-export const messageStore = {
-  addMessage(message: Message) {
-    state.messages.push(message);
-  },
-  updateMessages(messages: Message[]) {
-    state.messages = messages;
-  },
-  get state() {
-    return state;
-  },
-};

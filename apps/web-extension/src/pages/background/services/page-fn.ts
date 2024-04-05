@@ -89,7 +89,7 @@ function assembleJsCode(options: ExecutePageFnOptions) {
   const { name, code } = options.data.page_fn;
   return `
     (function() {
-      PupaPage = {
+      const page = {
         sendMessage(data) {
           const options = Object.keys(data).map(key => ({ name: key, value: data[key] }));
           postResult({ type: ${InteractionType.PAGE_FUNCTION_MESSAGE}, options });

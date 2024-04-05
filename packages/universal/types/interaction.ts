@@ -36,7 +36,7 @@ export interface InteractionDataOption {
   name: string;
   value: DataOptionValue;
   type: CommandOptionType;
-  options?: InteractionDataOption[];
+  // options?: InteractionDataOption[];
 }
 
 export type DataOptionValue = string | number | boolean;
@@ -61,6 +61,7 @@ export type InteractionResponseData =
   | IRCResponseDataOfPageFn;
 
 export interface IRCResponseDataOfPageFn {
+  content?: string;
   page_fn: {
     name: string;
     code: string;

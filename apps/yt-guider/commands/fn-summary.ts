@@ -72,6 +72,13 @@ export default definePageFuncCommand({
   description: "概括视频片段内容",
   execute: async (interaction) => {
     if (!interaction.commandOptions) return;
+    const type = interaction.commandOptions.find(
+      (o) => o.name === "type",
+    )?.value;
+    if (type === "error") {
+      interaction.end("failed to execute summary, please try again.");
+      return;
+    }
     const time = interaction.commandOptions.find((o) => o.name === "time")
       ?.value as number;
     const videoId = interaction.commandOptions.find((o) => o.name === "videoId")

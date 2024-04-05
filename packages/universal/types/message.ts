@@ -10,6 +10,7 @@ export interface Message {
   updated_at?: number;
   elements?: MessageElement[];
   bot?: boolean;
+  interaction_id?: string;
 }
 
 export const enum MessageType {

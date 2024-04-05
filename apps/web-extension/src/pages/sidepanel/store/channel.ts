@@ -1,32 +1,26 @@
 import type { Channel } from "@pupa/universal/types";
-import { proxy } from "valtio";
+import { createStore } from "./store";
 
-const state = proxy({
-  channels: [] as Channel[],
+export const channelStore = createStore({
+  state: { channels: [] as Channel[] },
+  actions: {
+    addChannel: (state, channel: Channel) => {
+      state.channels.unshift(channel);
+    },
+    setChannels: (state, channels: Channel[]) => {
+      Object.assign(state, { channels });
+    },
+    deleteChannel: (state, channelId: string) => {
+      const channels = state.channels.filter(
+        (channel) => channel.id !== channelId,
+      );
+      Object.assign(state, { channels });
+    },
+    getChannelById: (state, channelId: string) =>
+      state.channels.find((channel) => channel.id === channelId) || null,
+  },
+  getters: {
+    length: (state) => state.channels.length,
+    lastChannel: (state) => state.channels[state.channels.length - 1],
+  },
 });
-
-export const channelStore = {
-  get state() {
-    return state;
-  },
-  get length() {
-    return state.channels.length;
-  },
-  get lastChannel() {
-    return state.channels[state.channels.length - 1];
-  },
-  addChannel(channel: Channel) {
-    state.channels.unshift(channel);
-  },
-  setChannels(channels: Channel[]) {
-    state.channels = channels;
-  },
-  deleteChannel(channelId: string) {
-    state.channels = state.channels.filter(
-      (channel) => channel.id !== channelId,
-    );
-  },
-  getChannelById(channelId: string) {
-    return state.channels.find((channel) => channel.id === channelId) || null;
-  },
-};
