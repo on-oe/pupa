@@ -167,6 +167,7 @@ class App {
   private async onInteraction(interaction: InteractionContext) {
     switch (interaction.type) {
       case InteractionType.APPLICATION_COMMAND:
+      case InteractionType.PAGE_FUNCTION_MESSAGE:
         {
           const commander = this.getCommander(interaction);
           commander?.execute(interaction);
@@ -188,7 +189,13 @@ class App {
 
   private async loadCommands() {
     const dirPath = path.join(process.cwd(), "commands");
-    const cmdFiles = await fs.readdir(dirPath);
+    const files = await fs.readdir(dirPath);
+    const cmdFiles = files.filter(
+      (file) =>
+        file.endsWith(".ts") &&
+        !file.endsWith(".d.ts") &&
+        !file.endsWith(".test.ts"),
+    );
     const tasks = cmdFiles.map(async (file) => {
       const { default: commander } = (await import(`${dirPath}/${file}`)) as {
         default: Commander;
@@ -202,11 +209,12 @@ class App {
     switch (commander.type) {
       case CommandType.CHAT_INPUT:
         this.commanders.set(commander.id, commander);
+        console.log("Loaded slash command:", commander.name);
         break;
       case CommandType.PAGE_FUNCTION:
         this.pfCommanders.set(commander.id, commander);
+        console.log("Loaded page function:", commander.name);
         break;
     }
-    console.log("Loaded command:", commander.name);
   }
 }
