@@ -9,6 +9,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@pupa/universal": "workspace:*"
+    "@pupa/universal": "workspace:*",
+    "openai": "^4.33.0"
   }
 }

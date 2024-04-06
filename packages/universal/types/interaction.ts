@@ -18,7 +18,8 @@ export interface Interaction {
 }
 
 export const enum InteractionType {
-  PING = 1,
+  PING = 0,
+  MESSAGE = 1,
   APPLICATION_COMMAND = 2,
   MESSAGE_COMPONENT = 3,
   APPLICATION_COMMAND_AUTOCOMPLETE = 4,

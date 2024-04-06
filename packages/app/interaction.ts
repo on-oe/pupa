@@ -39,6 +39,10 @@ export class InteractionContext {
     return this.dto.data?.options;
   }
 
+  get message() {
+    return this.dto.message;
+  }
+
   get isReplied() {
     return this.replied;
   }
