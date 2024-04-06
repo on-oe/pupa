@@ -22,6 +22,7 @@ interface CreateAppOptions {
   icon: string;
   matches?: string[];
   commanders?: Commander[];
+  onMessage?: (interaction: InteractionContext) => void;
 }
 
 export function createApp(options: CreateAppOptions) {
@@ -173,6 +174,8 @@ class App {
           commander?.execute(interaction);
         }
         break;
+      default:
+        this.options.onMessage?.(interaction);
     }
   }
 

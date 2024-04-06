@@ -7,7 +7,7 @@ import { CommandInput } from "./command-input";
 import { ChatHistory } from "./chat-history";
 import { MessageList } from "./message-list";
 import { Header } from "./header";
-import { bridge } from "../../bridge";
+import bridge from "../../bridge";
 import { applicationStore, channelStore } from "../../store";
 import { store } from "./store";
 

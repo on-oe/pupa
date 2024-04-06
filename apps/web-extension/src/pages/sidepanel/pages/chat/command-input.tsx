@@ -11,7 +11,7 @@ import type { Channel, Interaction } from "@pupa/universal/types";
 import { ExecSlashCommandEvent } from "@shared/bridge/events/application";
 import { AddChannelEvent } from "@shared/bridge/events/message";
 import { sendingCommandStore, store } from "./store";
-import { bridge } from "../../bridge";
+import bridge from "../../bridge";
 import { useInputMenu } from "../../hooks/use-input-menu";
 import { applicationStore, channelStore } from "../../store";
 import { isEnterKey } from "../../utils/keyboard";

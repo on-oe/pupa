@@ -111,4 +111,15 @@ export class InteractionContext {
       true,
     );
   }
+
+  createAgent(prompt: string) {
+    return {
+      reply: (msg: string) => {
+        return this.reply({
+          type: InteractionResponseType.AGENT_MESSAGE,
+          data: { content: msg, prompt, stream: true },
+        });
+      },
+    };
+  }
 }

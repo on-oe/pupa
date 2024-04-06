@@ -14,6 +14,8 @@ export const CreateMessageEvent = defineBridgeEvent<{
 
 export const ReceiveMessageEvent = defineBridgeEvent<Message>("ReceiveMessage");
 
+export const UpdateMessageEvent = defineBridgeEvent<Message>("UpdateMessage");
+
 export const AddChannelEvent = defineBridgeEvent<Message>("AddChannel");
 
 export const DeleteChannelEvent = defineBridgeEvent<{ channelId: string }>(

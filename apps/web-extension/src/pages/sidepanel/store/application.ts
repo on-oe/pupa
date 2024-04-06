@@ -6,7 +6,7 @@ import type {
 import { GetInstalledAppsEvent } from "@shared/bridge/events/application";
 import { builtInAppWithCommands } from "@shared/built-in-app";
 import { createStore } from "./store";
-import { bridge } from "../bridge";
+import bridge from "../bridge";
 
 function fetchCommand(app: Application): Promise<Command[]> {
   const url = app.interactions_endpoint_url;

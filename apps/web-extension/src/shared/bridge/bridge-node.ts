@@ -18,7 +18,6 @@ export class BridgeNode {
   }
 
   async callHandler(type: string, data: unknown) {
-    console.log("callHandler", type, data);
     return this.handlers[type](data);
   }
 

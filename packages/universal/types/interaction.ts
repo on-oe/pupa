@@ -43,10 +43,19 @@ export interface InteractionDataOption {
 
 export type DataOptionValue = string | number | boolean;
 
-export interface InteractionResponse {
-  type: InteractionResponseType;
-  data?: InteractionResponseData;
-}
+export type InteractionResponse =
+  | {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE;
+      data: IRCResponseDataOfMessage;
+    }
+  | {
+      type: InteractionResponseType.EXECUTE_PAGE_FUNCTION;
+      data: IRCResponseDataOfPageFn;
+    }
+  | {
+      type: InteractionResponseType.AGENT_MESSAGE;
+      data: IRCResponseOfAgentMessage;
+    };
 
 export const enum InteractionResponseType {
   PONG = 1,
@@ -55,12 +64,14 @@ export const enum InteractionResponseType {
   DEFERRED_UPDATE_MESSAGE = 6,
   UPDATE_MESSAGE = 7,
   EXECUTE_PAGE_FUNCTION = 11,
+  AGENT_MESSAGE = 12,
 }
 
 export type InteractionResponseData =
   | IRCResponseDataOfMessage
   | IRCResponseDataOfCmdAutocomplete
-  | IRCResponseDataOfPageFn;
+  | IRCResponseDataOfPageFn
+  | IRCResponseOfAgentMessage;
 
 export interface IRCResponseDataOfPageFn {
   content?: string;
@@ -77,4 +88,10 @@ export interface IRCResponseDataOfCmdAutocomplete {
 export interface IRCResponseDataOfMessage {
   content: string;
   components?: MessageElement[];
+}
+
+export interface IRCResponseOfAgentMessage {
+  content: string;
+  prompt: string;
+  stream: boolean;
 }

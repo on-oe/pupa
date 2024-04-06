@@ -4,7 +4,7 @@ import { useSnapshot } from "valtio";
 import { DeleteChannelEvent } from "@shared/bridge/events/message";
 import { channelStore } from "../../store";
 import { store } from "./store";
-import { bridge } from "../../bridge";
+import bridge from "../../bridge";
 
 export function ChatHistory() {
   const { channels } = useSnapshot(channelStore.state);

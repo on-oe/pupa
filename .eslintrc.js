@@ -51,6 +51,7 @@ module.exports = {
     "@typescript-eslint/consistent-type-imports": "error",
     "no-plusplus": "off",
     "no-param-reassign": ["error", { props: false }],
+    "no-restricted-syntax": "off",
   },
   settings: {
     react: {

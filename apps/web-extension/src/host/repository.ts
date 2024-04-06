@@ -116,15 +116,17 @@ export class Repository {
     return messages.sort((a, b) => a.created_at - b.created_at);
   }
 
-  async appendMessage(message: Message) {
-    const { channel_id: channelId } = message;
+  async appendMessage(data: Omit<Message, "id">) {
+    const { channel_id: channelId } = data;
     const messages = await this.getMessageStorage(channelId);
-    messages[message.id] = message;
-    this.updateChannel(channelId, { last_message_id: message.id });
-    this.storage.set({
+    const id = createId();
+    const message = { ...data, id };
+    messages[id] = message;
+    this.updateChannel(channelId, { last_message_id: id });
+    await this.storage.set({
       [getMessageStorageKey(channelId)]: messages,
     });
-    return message;
+    return message as Message;
   }
 
   async updateChannel(id: string, data: Partial<StoredChannel>) {
@@ -144,6 +146,15 @@ export class Repository {
     apps[id] = { ...apps[id], ...data };
     await this.storage.set({ [this.keys.installedApps]: apps });
     return apps[id];
+  }
+
+  async updateMessage(channelId: string, id: string, data: Partial<Message>) {
+    const messages = await this.getMessageStorage(channelId);
+    messages[id] = { ...messages[id], ...data };
+    await this.storage.set({
+      [getMessageStorageKey(channelId)]: messages,
+    });
+    return messages[id];
   }
 
   private async getMessageStorage(

@@ -6,7 +6,7 @@ import { FetchMessagesEvent } from "@shared/bridge/events/message";
 import { messageStore } from "../../store";
 import { MessageComponent } from "../../components/message";
 import { store } from "./store";
-import { bridge } from "../../bridge";
+import bridge from "../../bridge";
 
 export function MessageList() {
   const { messages } = useSnapshot(messageStore.state);

@@ -1,12 +1,21 @@
 import { BridgeNode } from "@shared/bridge/bridge-node";
-import { ReceiveMessageEvent } from "@shared/bridge/events/message";
+import {
+  ReceiveMessageEvent,
+  UpdateMessageEvent,
+} from "@shared/bridge/events/message";
 import { RefreshInstalledAppsEvent } from "@shared/bridge/events/application";
+import type { Message } from "@pupa/universal/types";
 import { applicationStore, messageStore } from "./store";
 
-export const bridge = new BridgeNode();
+const bridge = new BridgeNode();
+export default bridge;
 
 bridge.addHandler(ReceiveMessageEvent, (msg) => {
   messageStore.addMessage(msg);
+});
+
+bridge.addHandler(UpdateMessageEvent, (message: Message) => {
+  messageStore.updateMessage(message);
 });
 
 bridge.addHandler(RefreshInstalledAppsEvent, () => {

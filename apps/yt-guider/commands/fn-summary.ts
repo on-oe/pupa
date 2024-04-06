@@ -29,14 +29,18 @@ export default definePageFuncCommand({
     }
     // interaction.defer({ type: 5 });
     const transcript = await getTranscriptPart(videoId, time);
-    const content = await summarize(transcript, title);
-    if (!content) {
-      interaction.reply({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: { content: "无法获取字幕" },
-      });
-      return;
-    }
-    interaction.reply({ type: 4, data: { content } });
+    // const content = await summarize(transcript, title);
+    // if (!content) {
+    //   interaction.reply({
+    //     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    //     data: { content: "无法获取字幕" },
+    //   });
+    //   return;
+    // }
+    // interaction.reply({ type: 4, data: { content } });
+    const agent = interaction.createAgent(
+      "帮我创建一个辅助概括视频片段内容的助手",
+    );
+    agent.reply(transcript);
   },
 });
