@@ -100,7 +100,7 @@ export class InteractionContext {
   }
 
   async execPageFn(name: string) {
-    const filePath = path.join(process.cwd(), "pfn", `${name}.js`);
+    const filePath = path.join(process.cwd(), "functions", `${name}.js`);
     const file = Bun.file(filePath);
     const code = await file.text();
     await this.send(
