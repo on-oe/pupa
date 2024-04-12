@@ -46,6 +46,14 @@ export const applicationStore = createStore({
           state.applications = [builtInAppWithCommands];
         });
     },
+    addOrUpdateApp(state, app: ApplicationWithCommands) {
+      const index = state.applications.findIndex((a) => a.id === app.id);
+      if (index === -1) {
+        state.applications.push(app);
+      } else {
+        state.applications[index] = app;
+      }
+    },
   },
   getters: {
     allCommands(state) {

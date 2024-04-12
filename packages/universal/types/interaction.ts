@@ -11,6 +11,7 @@ export interface Interaction {
   application_id: string;
   type: InteractionType;
   channel_id: string;
+  token: string;
   data?: InteractionData;
   user?: User;
   message?: Message;
@@ -27,12 +28,16 @@ export const enum InteractionType {
   PAGE_FUNCTION_MESSAGE = 6,
 }
 
-export interface InteractionData {
-  id: string;
-  name: string;
-  type: CommandType;
-  options?: InteractionDataOption[];
-}
+export type InteractionData =
+  | {
+      id: string;
+      name: string;
+      type: CommandType;
+      options?: InteractionDataOption[];
+    }
+  | {
+      content: string;
+    };
 
 export interface InteractionDataOption {
   name: string;
@@ -87,7 +92,7 @@ export interface IRCResponseDataOfCmdAutocomplete {
 
 export interface IRCResponseDataOfMessage {
   content: string;
-  components?: MessageElement[];
+  elements?: MessageElement[];
 }
 
 export interface IRCResponseOfAgentMessage {

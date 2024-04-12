@@ -1,8 +1,8 @@
-import type { BaseFetcher } from "../fetcher/base-fetcher";
-import { ClientFetcher } from "../fetcher/client-fetcher";
+import { ApiFetcher } from '../fetcher/api-fetcher';
+import type { BaseFetcher } from '../fetcher/base-fetcher';
 
 function getFetcher(): BaseFetcher {
-  return new ClientFetcher();
+  return new ApiFetcher();
 }
 
 export const fetcher = getFetcher();

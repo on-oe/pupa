@@ -1,7 +1,6 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
   extends: [
-    "airbnb",
     "plugin:react/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
@@ -39,7 +38,7 @@ module.exports = {
     "react-hooks/exhaustive-deps": "warn",
     "react/require-default-props": "off",
     "react/jsx-props-no-spreading": "warn",
-    "prettier/prettier": "error",
+    "prettier/prettier": "warn",
     "no-use-before-define": "off",
     "import/no-extraneous-dependencies": "off",
     "import/no-unresolved": "off",

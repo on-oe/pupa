@@ -4,6 +4,7 @@ import type {
   Channel,
   Message,
   Interaction,
+  User,
 } from "@pupa/universal/types";
 
 export interface BaseFetcher {
@@ -32,6 +33,8 @@ export interface BaseFetcher {
     channelId: string,
     data: InteractionData,
   ): void;
+
+  getUser(): Promise<User>;
 
   get abort(): () => boolean;
 }

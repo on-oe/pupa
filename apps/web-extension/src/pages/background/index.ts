@@ -1,9 +1,13 @@
-import "./services/socker";
+import { admin } from './services/admin';
+import { socker } from './services/socker';
 
 function main() {
-  chrome.sidePanel
-    .setPanelBehavior({ openPanelOnActionClick: true })
-    .catch((error) => console.error(error));
+  admin.login().then(() => {
+    socker.connect();
+    chrome.sidePanel
+      .setPanelBehavior({ openPanelOnActionClick: true })
+      .catch((error) => console.error(error));
+  });
 }
 
 main();
