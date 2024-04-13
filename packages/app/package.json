@@ -2,6 +2,9 @@
   "name": "@pupa/app",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -10,6 +13,7 @@
   },
   "dependencies": {
     "@pupa/universal": "workspace:*",
+    "ky": "^1.2.3",
     "openai": "^4.33.0"
   }
 }

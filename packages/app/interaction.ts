@@ -1,4 +1,3 @@
-import path from "node:path";
 import {
   InteractionType,
   type Interaction,
@@ -25,10 +24,6 @@ export class InteractionContext {
 
   get type() {
     return this.dto.type;
-  }
-
-  get commandId() {
-    return this.dto.data?.id;
   }
 
   get commandName() {
@@ -100,13 +95,11 @@ export class InteractionContext {
   }
 
   async execPageFn(name: string) {
-    const filePath = path.join(process.cwd(), "functions", `${name}.js`);
-    const file = Bun.file(filePath);
-    const code = await file.text();
+    const uri = process.env.DEV_ENDPOINT + '/dist/' + name + '.js';
     await this.send(
       {
         type: InteractionResponseType.EXECUTE_PAGE_FUNCTION,
-        data: { page_fn: { name, code } },
+        data: { name, uri },
       },
       true,
     );

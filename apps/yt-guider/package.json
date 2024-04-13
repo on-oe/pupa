@@ -2,6 +2,9 @@
   "name": "yt-guider",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run index.ts"
+  },
   "dependencies": {
     "@pupa/app": "workspace:*",
     "@pupa/universal": "workspace:*",

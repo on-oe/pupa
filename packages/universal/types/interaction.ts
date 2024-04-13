@@ -4,7 +4,7 @@ import type {
   Message,
   MessageElement,
   User,
-} from ".";
+} from '.';
 
 export interface Interaction {
   id: string;
@@ -28,16 +28,11 @@ export const enum InteractionType {
   PAGE_FUNCTION_MESSAGE = 6,
 }
 
-export type InteractionData =
-  | {
-      id: string;
-      name: string;
-      type: CommandType;
-      options?: InteractionDataOption[];
-    }
-  | {
-      content: string;
-    };
+export type InteractionData = {
+  name: string;
+  type: CommandType;
+  options?: InteractionDataOption[];
+};
 
 export interface InteractionDataOption {
   name: string;
@@ -80,10 +75,8 @@ export type InteractionResponseData =
 
 export interface IRCResponseDataOfPageFn {
   content?: string;
-  page_fn: {
-    name: string;
-    code: string;
-  };
+  name: string;
+  uri: string;
 }
 
 export interface IRCResponseDataOfCmdAutocomplete {
