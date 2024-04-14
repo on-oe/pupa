@@ -218,10 +218,9 @@ class App {
     const appPath = path.join(process.cwd(), '.pupa', 'app.json');
     const isExist = await fs.exists(appPath);
     if (!isExist) {
-      await fs.mkdir(path.dirname(appPath), { recursive: true });
-      await fs.writeFile(appPath, JSON.stringify(app, null, 2));
       const { id } = await host.devStart(app);
       app.id = id;
+      await fs.mkdir(path.dirname(appPath), { recursive: true });
       await fs.writeFile(appPath, JSON.stringify(app, null, 2));
     } else {
       const appData = JSON.parse(await fs.readFile(appPath, 'utf-8'));
