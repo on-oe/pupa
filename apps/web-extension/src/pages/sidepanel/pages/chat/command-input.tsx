@@ -30,7 +30,6 @@ function getSlashCommandDataFromInteraction(interaction: Interaction) {
       icon: "",
     },
     command: {
-      id: command.id,
       name: command.name,
       description: "",
       type: command.type,

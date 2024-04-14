@@ -7,6 +7,7 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { getApiKey } from './utils.js';
 
 const program = new Command();
 
@@ -51,14 +52,43 @@ program
   .action(async (entry) => {
     await checkBunInstallation();
     await build();
+    const key = await getApiKey();
     execSync(`bun run ${entry}`, {
       env: {
         ...process.env,
         NODE_ENV: 'development',
         DEV_ENDPOINT: 'http://localhost:6700',
+        PUPA_API_KEY: key,
       },
       stdio: 'inherit',
     });
+  });
+
+program
+  .command('login')
+  .description('login to the app')
+  .argument('[token]', 'token')
+  .action(async (token) => {
+    if (!token) {
+      console.error('Token is required!');
+      return;
+    }
+    const configPath = path.join(process.env.HOME, '.pupa');
+    let config = {};
+    if (!existsSync(configPath)) {
+      await fs.mkdir(configPath);
+    } else {
+      config = JSON.parse(
+        await fs.readFile(path.join(configPath, 'config.json'), 'utf-8'),
+      );
+    }
+
+    config.token = token;
+
+    await fs.writeFile(
+      path.join(configPath, 'config.json'),
+      JSON.stringify(config, null, 2),
+    );
   });
 
 program.parse();

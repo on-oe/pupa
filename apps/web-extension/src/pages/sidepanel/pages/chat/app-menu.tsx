@@ -5,6 +5,7 @@ import { applicationStore } from "../../store";
 export function AppMenu(props: { selectedIndex: number }) {
   const { selectedIndex } = props;
   const { applications } = useSnapshot(applicationStore.state);
+  console.log(applications);
 
   return (
     <List size="small" split={false}>

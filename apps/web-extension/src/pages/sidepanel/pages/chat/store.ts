@@ -74,6 +74,7 @@ export const sendingCommandStore = createStore({
       }
     },
     submitOption: (state, value: string) => {
+      console.log(value);
       const { currentOption, dataOptions } = state;
       if (currentOption) {
         const index = state.dataOptions.findIndex(
@@ -84,7 +85,7 @@ export const sendingCommandStore = createStore({
         } else {
           state.dataOptions = [...dataOptions, { ...currentOption, value }];
         }
-        store.clearInput();
+        store.setInput('');
         const nextOpt = store.state.currentCommand?.options?.find(
           (opt) => opt.name !== currentOption.name,
         );

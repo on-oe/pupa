@@ -4,6 +4,9 @@ import ky from 'ky';
 class Host {
   private host = ky.create({
     prefixUrl: 'http://localhost:3000/api/',
+    headers: {
+      Authorization: `Bearer ${process.env.PUPA_API_KEY}`,
+    },
   });
 
   devStart(app: Partial<Application>) {

@@ -35,16 +35,17 @@ export const applicationStore = createStore({
       return app?.commands.find((cmd) => cmd.id === cmdId) || null;
     },
     async fetchApplications(state) {
-      const apps = await bridge.send<Application[]>(
+      const apps = await bridge.send<ApplicationWithCommands[]>(
         GetInstalledAppsEvent.create(),
       );
-      fetchCommands(apps)
-        .then((apps) => {
-          state.applications = [...apps, builtInAppWithCommands];
-        })
-        .catch(() => {
-          state.applications = [builtInAppWithCommands];
-        });
+      state.applications = [...apps, builtInAppWithCommands];
+      // fetchCommands(apps)
+      //   .then((apps) => {
+      //     state.applications = [...apps, builtInAppWithCommands];
+      //   })
+      //   .catch(() => {
+      //     state.applications = [builtInAppWithCommands];
+      //   });
     },
     addOrUpdateApp(state, app: ApplicationWithCommands) {
       const index = state.applications.findIndex((a) => a.id === app.id);

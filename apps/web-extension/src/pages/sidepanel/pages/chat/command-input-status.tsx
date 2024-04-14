@@ -42,7 +42,7 @@ export function CommandInputStatus() {
               className="cursor-pointer"
               onClick={() => sendingCommandStore.selectedOptionByIndex(i)}
             >
-              {opt.name}:{opt.value || (opt.required ? "required" : "optional")}
+              {opt.name}:{opt.value || ''}
             </Tag>
           ))}
         </>

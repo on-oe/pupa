@@ -36,5 +36,7 @@ export interface BaseFetcher {
 
   getUser(): Promise<User>;
 
+  login(username: string, password: string): Promise<void>;
+
   get abort(): () => boolean;
 }

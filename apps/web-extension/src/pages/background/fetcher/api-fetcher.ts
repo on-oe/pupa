@@ -25,6 +25,17 @@ export class ApiFetcher extends BaseAbortFetcher implements BaseFetcher {
     return this.host.get('auth/user').json<User>();
   }
 
+  login(username: string, password: string): Promise<void> {
+    return this.host
+      .post('auth/login', {
+        json: {
+          email: username,
+          password,
+        },
+      })
+      .json();
+  }
+
   async installApp(id: string): Promise<Application> {
     const app = await this.host
       .post('install', { json: { id } })

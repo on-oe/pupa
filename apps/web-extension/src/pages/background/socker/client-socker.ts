@@ -20,11 +20,31 @@ export class ClientSocker {
     return this.socket;
   }
 
-  connect() {
-    this.socket = io('http://localhost:3000', {
-      protocols: ['websocket'],
+  async connect() {
+    const cookie = await chrome.cookies.get({ url: 'http://localhost:3000', name: 'Authorization' });
+    if (!cookie) {
+      return console.error('403 Forbidden to connect to socket server');
+    }
+    const socket = io('http://localhost:3000/chat', {
+      transports: ['websocket'],
+      query: {
+        token: cookie.value,
+      },
     });
-    this.onConnected();
+    this.socket = socket;
+    socket.on('connect', () => {
+      console.log('socket connected');
+      this.onConnected();
+    });
+    socket.on('disconnect', () => {
+      console.log('socket disconnected');
+    });
+    socket.on('error', (error) => {
+      console.error('socket error', error);
+    });
+    socket.on('connect_error', (error) => {
+      console.error('socket connect error', error);
+    });
   }
 
   private onConnected() {
@@ -39,6 +59,14 @@ export class ClientSocker {
     });
     this.host.on('dev_application_started', (app: ApplicationWithCommands) => {
       bridge.send(AddOrUpdateAppEvent.create(app));
+    });
+    this.host.on(
+      'dev_application_updated',
+      (data: {
+        shouldRefresh: boolean;
+        application: ApplicationWithCommands;
+      }) => {
+        bridge.send(AddOrUpdateAppEvent.create(data.application));
     });
   }
 }
