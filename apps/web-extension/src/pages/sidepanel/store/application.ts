@@ -39,13 +39,6 @@ export const applicationStore = createStore({
         GetInstalledAppsEvent.create(),
       );
       state.applications = [...apps, builtInAppWithCommands];
-      // fetchCommands(apps)
-      //   .then((apps) => {
-      //     state.applications = [...apps, builtInAppWithCommands];
-      //   })
-      //   .catch(() => {
-      //     state.applications = [builtInAppWithCommands];
-      //   });
     },
     addOrUpdateApp(state, app: ApplicationWithCommands) {
       const index = state.applications.findIndex((a) => a.id === app.id);
@@ -54,6 +47,9 @@ export const applicationStore = createStore({
       } else {
         state.applications[index] = app;
       }
+    },
+    removeApp(state, appId: string) {
+      state.applications = state.applications.filter((app) => app.id !== appId);
     },
   },
   getters: {

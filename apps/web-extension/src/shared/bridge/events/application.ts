@@ -18,3 +18,5 @@ export const RefreshInstalledAppsEvent = defineBridgeEvent(
 
 export const AddOrUpdateAppEvent =
   defineBridgeEvent<ApplicationWithCommands>('AddOrUpdateApp');
+
+export const RemoveAppEvent = defineBridgeEvent<string>('RemoveApp');

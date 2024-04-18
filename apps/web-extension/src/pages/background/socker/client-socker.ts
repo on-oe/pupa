@@ -6,7 +6,7 @@ import type { ApplicationWithCommands, Message } from '@pupa/universal/types';
 import { pageFn, type ExecutePageFnOptions } from '../services/page-fn';
 import { bridge } from '../bridge';
 import { type Socket, io } from 'socket.io-client';
-import { AddOrUpdateAppEvent } from '@shared/bridge/events/application';
+import { AddOrUpdateAppEvent, RemoveAppEvent } from '@shared/bridge/events/application';
 
 export class ClientSocker {
   private socket?: Socket;
@@ -68,6 +68,9 @@ export class ClientSocker {
         application: ApplicationWithCommands;
       }) => {
         bridge.send(AddOrUpdateAppEvent.create(data.application));
+    });
+    this.host.on('dev_application_stopped', (id: string) => {
+      bridge.send(RemoveAppEvent.create(id));
     });
   }
 }

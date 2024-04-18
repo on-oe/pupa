@@ -169,7 +169,7 @@ class App {
   }
 
   private async served() {
-    const app = {
+    let app = {
       id: '',
       name: this.options.name,
       description: this.options.description,
@@ -197,8 +197,13 @@ class App {
       const appData = JSON.parse(await fs.readFile(appPath, 'utf-8'));
       const id = appData.id;
       const combined = Object.assign(appData, app, { id });
+      app = combined;
       fs.writeFile(appPath, JSON.stringify(combined, null, 2));
-      return await host.devUpdate(combined);
+      await host.devUpdate(combined);
     }
+
+    process.on('exit', () => {
+      host.devStop(app.id);
+    });
   }
 }

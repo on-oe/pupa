@@ -30,6 +30,10 @@ class Host {
       })
       .json();
   }
+
+  devStop(id: string) {
+    return this.host.post(`application/dev-application-stopped/${id}`).json();
+  }
 }
 
 export const host = new Host();

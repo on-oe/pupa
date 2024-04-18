@@ -3,7 +3,7 @@ import {
   ReceiveMessageEvent,
   UpdateMessageEvent,
 } from "@shared/bridge/events/message";
-import { AddOrUpdateAppEvent, RefreshInstalledAppsEvent } from "@shared/bridge/events/application";
+import { AddOrUpdateAppEvent, RefreshInstalledAppsEvent, RemoveAppEvent } from "@shared/bridge/events/application";
 import type { Message } from "@pupa/universal/types";
 import { applicationStore, messageStore } from "./store";
 
@@ -24,4 +24,8 @@ bridge.addHandler(RefreshInstalledAppsEvent, () => {
 
 bridge.addHandler(AddOrUpdateAppEvent, (app) => {
   applicationStore.addOrUpdateApp(app);
+});
+
+bridge.addHandler(RemoveAppEvent, (appId) => {
+  applicationStore.removeApp(appId);
 });
