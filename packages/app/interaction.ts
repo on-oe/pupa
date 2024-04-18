@@ -7,7 +7,6 @@ import {
 
 function send(id: string, token: string) {
   return (data: unknown) => {
-    console.log('send', data);
     fetch(`http://localhost:3000/api/interaction/${id}/${token}`, {
       method: 'POST',
       headers: {
@@ -20,10 +19,7 @@ function send(id: string, token: string) {
 
 export class InteractionContext {
   private send: (msg: InteractionResponse, isClose?: boolean) => void;
-  constructor(
-    private dto: Interaction,
-    // private send: (msg: InteractionResponse, isClose?: boolean) => void,
-  ) {
+  constructor(private dto: Interaction) {
     this.dto = dto;
     this.send = send(dto.id, dto.token);
   }
