@@ -3,15 +3,29 @@ import {
   type Interaction,
   type InteractionResponse,
   InteractionResponseType,
-} from "@pupa/universal/types";
+} from '@pupa/universal/types';
+
+function send(id: string, token: string) {
+  return (data: unknown) => {
+    console.log('send', data);
+    fetch(`http://localhost:3000/api/interaction/${id}/${token}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+}
 
 export class InteractionContext {
+  private send: (msg: InteractionResponse, isClose?: boolean) => void;
   constructor(
     private dto: Interaction,
-    private send: (msg: InteractionResponse, isClose?: boolean) => void,
+    // private send: (msg: InteractionResponse, isClose?: boolean) => void,
   ) {
     this.dto = dto;
-    this.send = send;
+    this.send = send(dto.id, dto.token);
   }
 
   private replied = false;
@@ -58,7 +72,7 @@ export class InteractionContext {
 
   followUp(msg: InteractionResponse) {
     if (this.replied) {
-      throw new Error("Already replied");
+      throw new Error('Already replied');
     }
     this.replied = true;
     this.deferred = false;
@@ -67,7 +81,7 @@ export class InteractionContext {
 
   defer(msg: InteractionResponse) {
     if (this.replied) {
-      throw new Error("Already replied");
+      throw new Error('Already replied');
     }
     this.replied = true;
     this.deferred = true;
@@ -76,7 +90,7 @@ export class InteractionContext {
 
   async reply(msg: InteractionResponse) {
     if (this.replied) {
-      throw new Error("Already replied");
+      throw new Error('Already replied');
     }
     this.replied = true;
     this.deferred = false;

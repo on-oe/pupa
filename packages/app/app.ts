@@ -10,6 +10,8 @@ import OpenAI from 'openai';
 import { InteractionContext } from './interaction';
 import type { Commander } from './command';
 import { host } from './host';
+import express, { type Express } from 'express';
+import cors from 'cors';
 
 const CON_MAX_TIME = 30000;
 
@@ -73,72 +75,35 @@ class App {
     return allCommanders.find((commander) => commander.name === commanderName);
   }
 
-  async serve(port = 6700) {
+  async serve(options: { port?: number; fetch: (host: Express) => void }) {
+    const { port = 6700 } = options;
+    const app = express();
+    app.use(cors());
+    app.use(express.json());
+    app.use(express.json({ type: 'application/json' }));
+    options.fetch(app);
     await this.loadCommands();
-    this.run(port);
+    this.run(app, port);
     console.log('App is running on port', port);
     await this.served();
   }
 
-  private run(port: number) {
-    const appOptions = this.options;
-
-    Bun.serve({
-      port,
-      fetch: (req) => {
-        const url = new URL(req.url);
-        if (url.pathname.startsWith('/dist')) {
-          const filePath = path.join(process.cwd(), url.pathname);
-          return new Response(Bun.file(filePath));
-        }
-
-        const bodyStr = url.searchParams.get('body');
-        if (!bodyStr) {
-          return new Response('Bad Request', {
-            status: 400,
-          });
-        }
-
-        const ircData = JSON.parse(bodyStr) as unknown as Interaction;
-
-        const stream = new ReadableStream({
-          start: (controller) => {
-            const close = () => {
-              controller.close();
-              clearTimeout(timeout);
-            };
-
-            const timeout = setTimeout(() => {
-              close();
-            }, CON_MAX_TIME);
-
-            const send = (msg: InteractionResponse, isClose = false) => {
-              return new Promise((resolve) => {
-                const dataString = `data: ${JSON.stringify(msg)}\n\n`;
-                const dataBuffer = new TextEncoder().encode(dataString);
-                controller.enqueue(dataBuffer);
-                resolve(msg);
-              }).then(() => {
-                if (isClose) {
-                  close();
-                }
-              });
-            };
-
-            const interaction = new InteractionContext(ircData, send);
-            this.onInteraction(interaction);
-          },
-        });
-
-        return new Response(stream, {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            Connection: 'keep-alive',
-          },
-        });
-      },
+  private run(app: Express, port: number) {
+    app.post('*', (req, res) => {
+      const ircData = req.body;
+      // const send = (msg: InteractionResponse) => {
+      //   res.json(msg);
+      // };
+      const interaction = new InteractionContext(ircData);
+      this.onInteraction(interaction);
+      res.end();
     });
+    app.get(/\/dist\/.*/, (req, res) => {
+      const filePath = path.join(process.cwd(), req.url);
+      res.sendFile(filePath);
+    });
+
+    app.listen(port);
   }
 
   private async onInteraction(interaction: InteractionContext) {
@@ -216,7 +181,13 @@ class App {
       })),
     };
     const appPath = path.join(process.cwd(), '.pupa', 'app.json');
-    const isExist = await fs.exists(appPath);
+    let isExist = false;
+    try {
+      await fs.access(appPath);
+      isExist = true;
+    } catch {
+      // ignore
+    }
     if (!isExist) {
       const { id } = await host.devStart(app);
       app.id = id;

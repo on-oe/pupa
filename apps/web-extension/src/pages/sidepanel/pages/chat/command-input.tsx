@@ -120,8 +120,8 @@ export function CommandInput() {
         },
       }),
     );
-    store.state.runningCommand =
-      getSlashCommandDataFromInteraction(interaction);
+    // store.state.runningCommand =
+    //   getSlashCommandDataFromInteraction(interaction);
   }
 
   const handleAtClick = () => {

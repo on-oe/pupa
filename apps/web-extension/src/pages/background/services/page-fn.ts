@@ -34,7 +34,7 @@ class PageFnService {
 
   constructor() {
     chrome.userScripts.configureWorld({
-      csp: "script-src 'self' 'unsafe-eval'",
+      csp: "script-src 'self' 'unsafe-eval' http://localhost:*",
       messaging: true,
     });
 
@@ -70,7 +70,7 @@ class PageFnService {
       );
     }
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       const tab = tabs[0];
       if (!tab?.id) {
         return;
@@ -78,30 +78,37 @@ class PageFnService {
       this.executer.executeScript({
         target: { tabId: tab.id },
         func,
-        args: [this.USER_SCRIPT_EVENT, assembleJsCode(options)],
+        args: [this.USER_SCRIPT_EVENT, await assembleJsCode(options)],
       });
     });
   }
 }
 
-function assembleJsCode(options: ExecutePageFnOptions) {
+async function assembleJsCode(options: ExecutePageFnOptions) {
   const { channel_id: cid, application_id: appid } = options.interaction;
-  const { name, code } = options.data.page_fn;
+  const { name, uri } = options;
+  const code = await fetch(uri).then((res) => res.text());
   return `
     (function() {
       const page = {
         sendMessage(data) {
           const options = Object.keys(data).map(key => ({ name: key, value: data[key] }));
           postResult({ type: ${InteractionType.PAGE_FUNCTION_MESSAGE}, options });
+        },
+        env: {
+          ENDPOINT: "http://localhost:6700",
         }
       }
+      globalThis.page = page;
 
       function postResult(result) {
         const data = { type: result.type, data: { id: "${name}", name: "${name}", options: result.options }, channel_id: "${cid}", application_id: "${appid}"};
         chrome.runtime.sendMessage({ type: "${PageFnMessageType.PAGE_FN_EVENT}", data });
       }
 
-      ${code}
+      (async function() {
+        ${code}
+      })()
     })();
   `;
 }

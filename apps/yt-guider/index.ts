@@ -1,4 +1,5 @@
 import { createApp } from '@pupa/app';
+import { getTranscript } from './services/transcript';
 
 const app = createApp({
   name: 'yt-guider',
@@ -14,4 +15,13 @@ const app = createApp({
 //   agent.reply(interaction.message.content);
 // });
 
-app.serve();
+app.serve({
+  fetch(host) {
+    host.get('/transcript', (req, res) => {
+      const videoId = req.query.v as string;
+      getTranscript(videoId).then((transcript) => {
+        res.json(transcript);
+      });
+    });
+  },
+});

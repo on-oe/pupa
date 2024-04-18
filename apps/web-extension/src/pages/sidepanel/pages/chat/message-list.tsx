@@ -48,11 +48,11 @@ export function MessageList() {
       {messages.map((message, i) => (
         <div key={message.id} className="flex p-4">
           <div className="mr-[6px]">
-            <Avatar src={message.author.avatar} className="w-6 h-6 text-tiny" />
+            <Avatar src={message.user.avatar} className="w-6 h-6 text-tiny" />
           </div>
           <div className="flex-1 overflow-auto">
             <div className="text-xs font-semibold text-gray-600">
-              {message.author.username}
+              {message.user.username}
             </div>
             <MessageComponent message={messageStore.getMessageByIndex(i)} />
           </div>

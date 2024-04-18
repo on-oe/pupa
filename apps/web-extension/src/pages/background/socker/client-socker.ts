@@ -49,6 +49,7 @@ export class ClientSocker {
 
   private onConnected() {
     this.host.on('execute_page_fn', (data) => {
+      console.log('execute_page_fn', data);
       pageFn.execute(data as ExecutePageFnOptions);
     });
     this.host.on('new_message', (data) => {

@@ -1,10 +1,10 @@
-import type { User } from "./user";
+import type { User } from './user';
 
 export interface Message {
   id: string;
   content: string;
   channel_id: string;
-  author: User;
+  user: User;
   type: MessageType;
   created_at: number;
   updated_at?: number;

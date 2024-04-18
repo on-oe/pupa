@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { build } from './build-fn.js';
 import { Command } from 'commander';
 import { checkBunInstallation } from './bun.js';
-import { execSync } from 'node:child_process';
+import { exec, execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { getApiKey } from './utils.js';
+import { dev } from './dev.js';
 
 const program = new Command();
 
@@ -49,11 +49,11 @@ program
   .command('dev')
   .description('start the dev app')
   .argument('[entry]', 'entry file', 'index.ts')
-  .action(async (entry) => {
-    await checkBunInstallation();
-    await build();
+  .option('-p, --port <port>', 'port', '7100')
+  .action(async (entry, options) => {
+    await dev(options.port);
     const key = await getApiKey();
-    execSync(`bun run ${entry}`, {
+    const serve = exec(`tsx ${entry}`, {
       env: {
         ...process.env,
         NODE_ENV: 'development',
@@ -61,6 +61,12 @@ program
         PUPA_API_KEY: key,
       },
       stdio: 'inherit',
+    });
+    serve.stdout.on('data', (data) => {
+      console.log(data);
+    });
+    serve.stderr.on('data', (data) => {
+      console.error(data);
     });
   });
 
