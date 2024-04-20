@@ -1,64 +1,39 @@
-import { Avatar } from "antd";
-import { useEffect, useRef } from "react";
-import { useSnapshot } from "valtio";
-import type { Message } from "@pupa/universal/types";
-import { FetchMessagesEvent } from "@shared/bridge/events/message";
-import { messageStore } from "../../store";
-import { MessageComponent } from "../../components/message";
-import { store } from "./store";
-import bridge from "../../bridge";
+import { Avatar } from 'antd';
+import { useEffect, useRef } from 'react';
+import { MessageComponent } from '../../components/message';
+import { useMessage } from '../../hooks/use-message';
 
 export function MessageList() {
-  const { messages } = useSnapshot(messageStore.state);
-  const { runningCommand } = useSnapshot(store.state);
-  const { currentChannel } = useSnapshot(store.state);
+  const { messages } = useMessage();
+  // const { runningCommand } = useSnapshot(store.state);
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    const fetchMessages = async (channelId: string) => {
-      const list = await bridge.send<Message[]>(
-        FetchMessagesEvent.create({ channelId }),
-      );
-      messageStore.updateMessages(list);
-    };
-
-    if (currentChannel) {
-      fetchMessages(currentChannel.id);
-    } else {
-      messageStore.updateMessages([]);
-    }
-  }, [currentChannel]);
-
-  useEffect(() => {
-    const resolvedCommand = messages.some(
-      (message) => message.interaction_id === runningCommand?.interactionId,
-    );
-    if (resolvedCommand) {
-      store.state.runningCommand = undefined;
-    }
-  }, [messages, runningCommand]);
+  // useEffect(() => {
+  //   const resolvedCommand = messages.some(
+  //     (message) => message.interaction_id === runningCommand?.interactionId,
+  //   );
+  //   if (resolvedCommand) {
+  //     store.state.runningCommand = undefined;
+  //   }
+  // }, [messages, runningCommand]);
 
   return (
     <div className="flex-1 pb-9 overflow-auto p-2">
-      {messages.map((message, i) => (
-        <div key={message.id} className="flex p-4">
-          <div className="mr-[6px]">
-            <Avatar src={message.user.avatar} className="w-6 h-6 text-tiny" />
-          </div>
-          <div className="flex-1 overflow-auto">
-            <div className="text-xs font-semibold text-gray-600">
-              {message.user.username}
-            </div>
-            <MessageComponent message={messageStore.getMessageByIndex(i)} />
-          </div>
-        </div>
+      {messages.map((message) => (
+        <MessageItem
+          key={message.id}
+          avatar={message.user.avatar}
+          username={message.user.username}
+        >
+          <MessageComponent message={message} />
+        </MessageItem>
       ))}
-      {runningCommand && (
+      {/* {runningCommand && (
         <MessageItem
           avatar={runningCommand.application.icon!}
           username={runningCommand.application.name!}
@@ -66,7 +41,7 @@ export function MessageList() {
         >
           <div className="w-4 h-4 my-2 bg-stone-900 rounded-full animate-breathe" />
         </MessageItem>
-      )}
+      )} */}
       <div ref={endOfMessagesRef} />
     </div>
   );

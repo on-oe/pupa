@@ -1,26 +1,48 @@
-import type { Channel } from "@pupa/universal/types";
-import { createStore } from "./store";
+import { atom } from 'jotai';
+import { store } from './store';
+import type { Channel, Message } from '@pupa/universal/types';
+import bridge from '../bridge';
 
-export const channelStore = createStore({
-  state: { channels: [] as Channel[] },
-  actions: {
-    addChannel: (state, channel: Channel) => {
-      state.channels.unshift(channel);
-    },
-    setChannels: (state, channels: Channel[]) => {
-      Object.assign(state, { channels });
-    },
-    deleteChannel: (state, channelId: string) => {
-      const channels = state.channels.filter(
-        (channel) => channel.id !== channelId,
-      );
-      Object.assign(state, { channels });
-    },
-    getChannelById: (state, channelId: string) =>
-      state.channels.find((channel) => channel.id === channelId) || null,
+export const channelsAtom = atom([] as Channel[]);
+export const currentChannelAtom = atom<Channel | null>(null);
+
+export const channelStore = {
+  getChannelById: (channelId: string) => {
+    return (
+      store.get(channelsAtom).find((channel) => channel.id === channelId) ||
+      null
+    );
   },
-  getters: {
-    length: (state) => state.channels.length,
-    lastChannel: (state) => state.channels[state.channels.length - 1],
+  setCurrentChannel: (id?: string) => {
+    bridge.send('setCurrentChannel', id);
   },
-});
+  addChannel(options?: { name: string }) {
+    return bridge.send('addChannel', options);
+  },
+  deleteChannel(channelId: string) {
+    bridge.send('deleteChannel', channelId);
+  },
+};
+
+export const messagesAtom = atom<Message[]>([]);
+
+export const messageStore = {
+  resetMessages: (messages: Message[] = []) => {
+    store.set(messagesAtom, messages);
+  },
+  addMessage: (message: Message) => {
+    store.set(messagesAtom, (messages) => [...messages, message]);
+  },
+  updateMessage: (message: Message) => {
+    store.set(messagesAtom, (messages) => {
+      const index = messages.findIndex((m) => m.id === message.id);
+      if (index !== -1) {
+        messages[index] = message;
+      }
+      return messages;
+    });
+  },
+  getMessageByIndex: (index: number) => {
+    return store.get(messagesAtom)[index];
+  },
+};

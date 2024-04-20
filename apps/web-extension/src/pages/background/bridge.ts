@@ -1,46 +1,67 @@
-import { BridgeNode } from "@shared/bridge/bridge-node";
+import { bridge } from '@shared/bridge';
 import {
-  ExecSlashCommandEvent,
-  GetInstalledAppsEvent,
-} from "@shared/bridge/events/application";
-import { builtInApplication } from "@shared/built-in-app";
-import {
-  AddChannelEvent,
-  DeleteChannelEvent,
-  FetchChannelsEvent,
-  FetchMessagesEvent,
-} from "@shared/bridge/events/message";
-import { fetcher } from "./services/fetcher";
-import { builtIn } from "./services/built-in";
+  store,
+  channelsAtom,
+  currentChannelAtom,
+  applicationsAtom,
+  messagesAtom,
+} from './store';
+import { fetcher } from './services/fetcher';
 
-export const bridge = new BridgeNode();
+export const channelContext = {
+  updateCurrentChannel(id: string) {
+    const channel = store
+      .get(channelsAtom)
+      .find((channel) => channel.id === id);
+    store.set(currentChannelAtom, channel || null);
+  },
+  async addChannel(opt?: { name: string }) {
+    const channel = await fetcher.addChannel(opt);
+    store.set(channelsAtom, (channels) => {
+      channels.unshift(channel);
+      return channels;
+    });
+    store.set(currentChannelAtom, channel);
+    return channel;
+  },
+  async deleteChannel(id: string) {
+    await fetcher.deleteChannel(id);
+    store.set(channelsAtom, (channels) => {
+      return channels.filter((channel) => channel.id !== id);
+    });
+    const currentChannel = store.get(currentChannelAtom);
+    if (currentChannel && currentChannel.id === id) {
+      store.set(currentChannelAtom, null);
+    }
+  },
+};
 
-bridge.addHandler(GetInstalledAppsEvent, async () => {
-  const apps = await fetcher.getInstalledApps();
-  return apps;
+bridge.on('setCurrentChannel', (channelId) => {
+  channelContext.updateCurrentChannel(channelId);
 });
 
-bridge.addHandler(ExecSlashCommandEvent, (payload) => {
-  const { data, applicationId, channelId } = payload;
-  if (applicationId === builtInApplication.id) {
-    builtIn.executeCommand(data);
-    return false;
-  }
-  return fetcher.execSlashCommand(applicationId, channelId, data);
+bridge.on('deleteChannel', (id) => {
+  channelContext.deleteChannel(id);
 });
 
-bridge.addHandler(FetchChannelsEvent, () => {
-  return fetcher.getChannels();
+bridge.on('loadSidePanel', () => {
+  const applications = store.get(applicationsAtom);
+  const channels = store.get(channelsAtom);
+  const currentChannel = store.get(currentChannelAtom);
+  const messages = store.get(messagesAtom);
+  bridge.send('applicationsChanged', applications);
+  bridge.send('channelsChanged', channels);
+  bridge.send('currentChannelChanged', currentChannel);
+  bridge.send('messagesChanged', messages);
 });
 
-bridge.addHandler(FetchMessagesEvent, (payload) => {
-  return fetcher.getMessages(payload.channelId);
+bridge.on('addChannel', (opt) => {
+  return channelContext.addChannel(opt);
 });
 
-bridge.addHandler(AddChannelEvent, () => {
-  return fetcher.addChannel();
+bridge.on('execSlashCommand', (payload) => {
+  const { channelId, applicationId, data } = payload;
+  fetcher.execSlashCommand(applicationId, channelId, data);
 });
 
-bridge.addHandler(DeleteChannelEvent, (payload) => {
-  return fetcher.deleteChannel(payload.channelId);
-});
+export default bridge;

@@ -16,7 +16,7 @@ export interface BaseFetcher {
 
   getChannels(): Promise<Channel[]>;
 
-  addChannel(): Promise<Channel>;
+  addChannel(opt?: { name: string }): Promise<Channel>;
 
   deleteChannel(channelId: string): Promise<void>;
 

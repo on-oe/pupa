@@ -54,8 +54,8 @@ export class ApiFetcher extends BaseAbortFetcher implements BaseFetcher {
   getChannels(): Promise<Channel[]> {
     return this.host.get('channel').json<Channel[]>();
   }
-  addChannel(): Promise<Channel> {
-    return this.host.post('channel').json<Channel>();
+  addChannel(opt?: { name: string }): Promise<Channel> {
+    return this.host.post('channel', { json: opt }).json<Channel>();
   }
   deleteChannel(channelId: string): Promise<void> {
     return this.host.delete(`channel/${channelId}`).json();

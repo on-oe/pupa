@@ -1,31 +1,52 @@
-import { BridgeNode } from "@shared/bridge/bridge-node";
+import type { ApplicationWithCommands, Channel } from '@pupa/universal/types';
+import { bridge } from '@shared/bridge';
 import {
-  ReceiveMessageEvent,
-  UpdateMessageEvent,
-} from "@shared/bridge/events/message";
-import { AddOrUpdateAppEvent, RefreshInstalledAppsEvent, RemoveAppEvent } from "@shared/bridge/events/application";
-import type { Message } from "@pupa/universal/types";
-import { applicationStore, messageStore } from "./store";
+  applicationsAtom,
+  channelsAtom,
+  currentChannelAtom,
+  messagesAtom,
+  store,
+} from './store';
 
-const bridge = new BridgeNode();
+export const applicationContext = {
+  updateApplications(applications: ApplicationWithCommands[]) {
+    store.set(applicationsAtom, applications);
+  },
+};
+
+export const channelContext = {
+  updateChannels(channels: Channel[]) {
+    store.set(channelsAtom, channels);
+  },
+  updateCurrentChannel(channel: Channel | null) {
+    store.set(currentChannelAtom, channel);
+  },
+};
+
+bridge.on('applicationsChanged', (apps) => {
+  applicationContext.updateApplications(apps);
+});
+
+bridge.on('channelsChanged', (channels) => {
+  channelContext.updateChannels(channels);
+});
+
+bridge.on('currentChannelChanged', (channel) => {
+  channelContext.updateCurrentChannel(channel);
+});
+
+bridge.on('messagesChanged', (messages) => {
+  store.set(messagesAtom, messages);
+});
+
+bridge.on('messageUpdated', (message) => {
+  store.set(messagesAtom, (messages) => {
+    const index = messages.findIndex((m) => m.id === message.id);
+    if (index !== -1) {
+      messages[index] = message;
+    }
+    return [...messages];
+  });
+});
+
 export default bridge;
-
-bridge.addHandler(ReceiveMessageEvent, (msg) => {
-  messageStore.addMessage(msg);
-});
-
-bridge.addHandler(UpdateMessageEvent, (message: Message) => {
-  messageStore.updateMessage(message);
-});
-
-bridge.addHandler(RefreshInstalledAppsEvent, () => {
-  applicationStore.fetchApplications();
-});
-
-bridge.addHandler(AddOrUpdateAppEvent, (app) => {
-  applicationStore.addOrUpdateApp(app);
-});
-
-bridge.addHandler(RemoveAppEvent, (appId) => {
-  applicationStore.removeApp(appId);
-});

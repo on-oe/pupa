@@ -1,17 +1,29 @@
-import { Tag } from "antd";
-import { useSnapshot } from "valtio";
-import { sendingCommandStore, store } from "./store";
+import { Tag } from 'antd';
+import {
+  currentAppAtom,
+  currentCommandAtom,
+  currentCommandValOptsAtom,
+  currentOptionAtom,
+} from './state';
+import { useAtom, useAtomValue } from 'jotai';
 
 export function CommandInputStatus() {
-  const { currentApp, currentCommand } = useSnapshot(store.state);
-  const { dataOptions } = useSnapshot(sendingCommandStore.state);
+  const [currentApp, setCurrentApp] = useAtom(currentAppAtom);
+  const [currentCommand, setCurrentCommand] = useAtom(currentCommandAtom);
+  const currentCommandValOpts = useAtomValue(currentCommandValOptsAtom);
+  const [, setCurrentOption] = useAtom(currentOptionAtom);
 
   const handleCloseAppTag = () => {
-    store.state.currentApp = null;
+    setCurrentApp(null);
   };
 
   const handleCloseCommandTag = () => {
-    store.state.currentCommand = null;
+    setCurrentCommand(null);
+  };
+
+  const selectOptionByIndex = (index: number) => {
+    const option = currentCommandValOpts[index];
+    setCurrentOption(option);
   };
 
   return (
@@ -36,11 +48,11 @@ export function CommandInputStatus() {
           >
             {`/${currentCommand.name} `}
           </Tag>
-          {dataOptions.map((opt, i) => (
+          {currentCommandValOpts.map((opt, i) => (
             <Tag
               key={opt.name}
               className="cursor-pointer"
-              onClick={() => sendingCommandStore.selectedOptionByIndex(i)}
+              onClick={() => selectOptionByIndex(i)}
             >
               {opt.name}:{opt.value || ''}
             </Tag>

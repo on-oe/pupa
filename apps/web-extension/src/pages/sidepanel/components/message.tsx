@@ -7,19 +7,17 @@ import {
   type Message,
   type MessageElement,
 } from "@pupa/universal/types";
-import { useSnapshot } from "valtio";
 
 interface MessageProps {
   message: Message;
 }
 
 export function MessageComponent({ message }: MessageProps) {
-  const snapMessage = useSnapshot(message);
   const elements = message.elements || [];
 
   return (
     <div className="px-1 py-[6px] rounded-lg text-stone-900 my-1 text-sm">
-      {snapMessage.content}
+      {message.content}
       {elements.map((element, index) => {
         return (
           <div key={index} className="my-1">

@@ -3,60 +3,78 @@ import {
   HistoryOutlined,
   PlusSquareFilled,
   SendOutlined,
-} from "@ant-design/icons";
-import { Button, Popover } from "antd";
-import { useSnapshot } from "valtio";
-import { useEffect, useState } from "react";
-import type { Channel, Interaction } from "@pupa/universal/types";
-import { ExecSlashCommandEvent } from "@shared/bridge/events/application";
-import { AddChannelEvent } from "@shared/bridge/events/message";
-import { sendingCommandStore, store } from "./store";
-import bridge from "../../bridge";
-import { useInputMenu } from "../../hooks/use-input-menu";
-import { applicationStore, channelStore } from "../../store";
-import { isEnterKey } from "../../utils/keyboard";
-import { AutoSizeTextarea } from "../../components/auto-size-textarea";
-import { AppMenu } from "./app-menu";
-import { CommandMenu } from "./command-menu";
-import { CommandInputStatus } from "./command-input-status";
+} from '@ant-design/icons';
+import { Button, Popover } from 'antd';
+import { useEffect, useState } from 'react';
+import type { Channel } from '@pupa/universal/types';
+import { useInputMenu } from '../../hooks/use-input-menu';
+import { isEnterKey } from '../../utils/keyboard';
+import { AutoSizeTextarea } from '../../components/auto-size-textarea';
+import { AppMenu } from './app-menu';
+import { CommandMenu } from './command-menu';
+import { CommandInputStatus } from './command-input-status';
+import { useApplication } from '../../hooks/use-application';
+import { useChannel } from '../../hooks/use-channel';
+import { useAtom } from 'jotai';
+import {
+  currentAppAtom,
+  currentCommandAtom,
+  currentCommandValOptsAtom,
+  currentOptionAtom,
+  inputAtom,
+  isOpenHistoryAtom,
+  isShowAppPanelAtom,
+  isShowCommandPanelAtom,
+} from './state';
+import { channelStore, applicationStore } from '../../store';
 
-function getSlashCommandDataFromInteraction(interaction: Interaction) {
-  const command = interaction.data!;
-  return {
-    application: {
-      id: interaction.application_id,
-      name: interaction.application_id,
-      description: "",
-      icon: "",
-    },
-    command: {
-      name: command.name,
-      description: "",
-      type: command.type,
-    },
-    interactionId: interaction.id,
-  };
-}
+// function getSlashCommandDataFromInteraction(interaction: Interaction) {
+//   const command = interaction.data!;
+//   return {
+//     application: {
+//       id: interaction.application_id,
+//       name: interaction.application_id,
+//       description: "",
+//       icon: "",
+//     },
+//     command: {
+//       name: command.name,
+//       description: "",
+//       type: command.type,
+//     },
+//     interactionId: interaction.id,
+//   };
+// }
 
 export function CommandInput() {
-  const { isShowApps, isShowCmds, currentApp, currentCommand, input } =
-    useSnapshot(store.state);
-  const { currentOption } = useSnapshot(sendingCommandStore.state);
-  const { applications } = useSnapshot(applicationStore.state);
-  const [placeholder, setPlaceholder] = useState<string>("");
+  const [, setIsOpenHistory] = useAtom(isOpenHistoryAtom);
+  const [currentApp, setCurrentApp] = useAtom(currentAppAtom);
+  const [currentCommand, setCurrentCommand] = useAtom(currentCommandAtom);
+  const [input, setInput] = useAtom(inputAtom);
+  const [isShowAppPanel] = useAtom(isShowAppPanelAtom);
+  const [isShowCommandPanel] = useAtom(isShowCommandPanelAtom);
+  const [currentOption, setCurrentOption] = useAtom(currentOptionAtom);
+  const [currentCommandValOpts, setCurrentCommandValOpts] = useAtom(
+    currentCommandValOptsAtom,
+  );
+  const { applications, allCommands, getAppCommand, getApplication } =
+    useApplication();
+  const { addChannel, currentChannel } = useChannel();
+  const [placeholder, setPlaceholder] = useState<string>('');
   const { onKeydown: onSelectAppKeydown, selectedIndex: selectedAppIndex } =
     useInputMenu({
       length: applications.length,
       onSelect: (index) => {
-        store.selectedApp(applicationStore.state.applications[index]);
+        setCurrentApp(applications[index]);
       },
     });
   const { onKeydown: onSelectCmdKeydown, selectedIndex: selectedCmdIndex } =
     useInputMenu({
-      length: applicationStore.allCommands.length,
+      length: allCommands.length,
       onSelect: (index) => {
-        const cmd = applicationStore.allCommands[index];
-        store.selectedCmd(cmd);
+        const cmd = allCommands[index];
+        setCurrentCommand(cmd);
+        setInput('');
       },
     });
 
@@ -67,7 +85,7 @@ export function CommandInput() {
       if (!currentOption)
         setPlaceholder(`⌘ + Enter to send ${currentCommand.name} command`);
     } else {
-      setPlaceholder("");
+      setPlaceholder('');
     }
   }, [currentApp, currentCommand, currentOption]);
 
@@ -78,80 +96,104 @@ export function CommandInput() {
   }, [currentOption]);
 
   const handleHistoryClick = () => {
-    store.toggleHistoryPanel(true);
+    setIsOpenHistory(true);
   };
 
   const handleAddChannelClick = () => {
-    store.newChannel();
+    channelStore.setCurrentChannel();
+  };
+
+  const resetInput = () => {
+    setInput('');
+    setCurrentApp(null);
+    setCurrentCommand(null);
   };
 
   async function onSend() {
-    if (store.state.currentCommand) {
-      if (!store.state.currentChannel) {
-        const channel = await bridge.send<Channel>(AddChannelEvent.create());
-        channelStore.addChannel(channel);
-        store.state.currentChannel = channel;
+    if (currentCommand) {
+      if (!currentChannel) {
+        const channel = await addChannel({
+          name: `Chat for ${currentCommand.name}`,
+        });
         onSlashCommand(channel);
       } else {
-        onSlashCommand();
+        onSlashCommand(currentChannel);
       }
     }
-    store.clearInput();
+    resetInput();
   }
 
-  async function onSlashCommand(channel = store.state.currentChannel) {
-    const { currentCommand } = store.state;
-    const { dataOptions } = sendingCommandStore.state;
-    if (!currentCommand || !channel) return;
-    const application = applicationStore.getApplication(
-      currentCommand.applicationId,
-    )!;
-    store.state.runningCommand = {
-      application,
-      command: currentCommand,
-    };
-    const interaction = await bridge.send<Interaction>(
-      ExecSlashCommandEvent.create({
-        applicationId: application.id,
-        channelId: channel.id,
-        data: {
-          ...currentCommand,
-          options: dataOptions,
-        },
-      }),
-    );
+  async function onSlashCommand(channel: Channel) {
+    if (!currentCommand) return;
+    const application = getApplication(currentCommand.applicationId)!;
+    applicationStore.execSlashCommand({
+      applicationId: application.id,
+      channelId: channel.id,
+      data: {
+        ...currentCommand,
+        options: currentCommandValOpts,
+      },
+    });
+    // store.state.runningCommand = {
+    //   application,
+    //   command: currentCommand,
+    // };
     // store.state.runningCommand =
     //   getSlashCommandDataFromInteraction(interaction);
   }
 
   const handleAtClick = () => {
-    store.setInput("@");
+    setInput('@');
   };
 
   function handleMsgChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    store.setInput(e.target.value);
+    setInput(e.target.value);
+  }
+
+  function submitOption(value: string) {
+    if (currentOption) {
+      const index = currentCommandValOpts.findIndex(
+        (opt) => opt.name === currentOption.name,
+      );
+      if (index > -1) {
+        currentCommandValOpts[index].value = value;
+        setCurrentCommandValOpts([...currentCommandValOpts]);
+      } else {
+        setCurrentCommandValOpts([
+          ...currentCommandValOpts,
+          { ...currentOption, value },
+        ]);
+      }
+      setInput('');
+      const nextOpt = currentCommand?.options?.find(
+        (opt) => opt.name !== currentOption.name,
+      );
+      if (nextOpt) {
+        setCurrentOption(nextOpt);
+      }
+    }
   }
 
   function handleMsgKeydown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (isShowApps) {
+    if (isShowAppPanel) {
       onSelectAppKeydown(e);
-    } else if (isShowCmds) {
+    } else if (isShowCommandPanel) {
       onSelectCmdKeydown(e);
-    } else if (input.length === 0 && e.key === "Backspace") {
-      store.clearInput();
+    } else if (input.length === 0 && e.key === 'Backspace') {
+      resetInput();
     } else if (isEnterKey(e) && currentCommand && input.length > 0) {
       e.preventDefault();
-      sendingCommandStore.submitOption(input);
+      submitOption(input);
     } else if (isEnterKey(e) && (e.metaKey || e.ctrlKey)) {
       onSend();
     }
   }
 
   function handleSelectCommand(key: string) {
-    const [appId, cmdId] = key.split("-");
-    const cmd = applicationStore.getAppCommand(appId, cmdId);
+    const [appId, cmdId] = key.split('-');
+    const cmd = getAppCommand(appId, cmdId);
     if (cmd) {
-      store.selectedCmd({ applicationId: appId, ...cmd });
+      setCurrentCommand({ applicationId: appId, ...cmd });
       if (cmd.options?.length === 0) {
         onSend();
       }
@@ -177,10 +219,10 @@ export function CommandInput() {
         </div>
       </div>
       <Popover
-        open={isShowApps || isShowCmds}
+        open={isShowAppPanel || isShowCommandPanel}
         overlayClassName="w-[calc(100%-24px)]"
         overlayInnerStyle={{
-          padding: "4px",
+          padding: '4px',
         }}
         placement="top"
         align={{
@@ -188,7 +230,7 @@ export function CommandInput() {
         }}
         arrow={false}
         content={
-          isShowApps ? (
+          isShowAppPanel ? (
             <AppMenu selectedIndex={selectedAppIndex} />
           ) : (
             <CommandMenu

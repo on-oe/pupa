@@ -1,18 +1,16 @@
-import { Avatar, List } from "antd";
-import { useSnapshot } from "valtio";
-import { applicationStore } from "../../store";
+import { Avatar, List } from 'antd';
+import { useApplication } from '../../hooks/use-application';
 
 export function AppMenu(props: { selectedIndex: number }) {
   const { selectedIndex } = props;
-  const { applications } = useSnapshot(applicationStore.state);
-  console.log(applications);
+  const { applications } = useApplication();
 
   return (
     <List size="small" split={false}>
       {applications.map((app, i) => (
         <List.Item
           key={app.id}
-          className={`hover:bg-slate-300 cursor-pointer ${selectedIndex === i ? "bg-slate-300" : ""}`}
+          className={`hover:bg-slate-300 cursor-pointer ${selectedIndex === i ? 'bg-slate-300' : ''}`}
         >
           <List.Item.Meta
             title={app.name}

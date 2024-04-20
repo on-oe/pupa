@@ -1,8 +1,7 @@
-import { useSnapshot } from "valtio";
-import { store } from "./store";
+import { useChannel } from '../../hooks/use-channel';
 
 export function Header() {
-  const { currentChannel } = useSnapshot(store.state);
+  const { currentChannel } = useChannel();
 
-  return <h2 className="text-xl">{currentChannel?.name || "New Chat"}</h2>;
+  return <h2 className="text-xl">{currentChannel?.name || 'New Chat'}</h2>;
 }

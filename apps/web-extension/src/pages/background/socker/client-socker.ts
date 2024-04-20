@@ -1,12 +1,7 @@
-import {
-  ReceiveMessageEvent,
-  UpdateMessageEvent,
-} from '@shared/bridge/events/message';
 import type { ApplicationWithCommands, Message } from '@pupa/universal/types';
 import { pageFn, type ExecutePageFnOptions } from '../services/page-fn';
-import { bridge } from '../bridge';
 import { type Socket, io } from 'socket.io-client';
-import { AddOrUpdateAppEvent, RemoveAppEvent } from '@shared/bridge/events/application';
+import { applicationStore, messageStore } from '../store';
 
 export class ClientSocker {
   private socket?: Socket;
@@ -52,14 +47,14 @@ export class ClientSocker {
       console.log('execute_page_fn', data);
       pageFn.execute(data as ExecutePageFnOptions);
     });
-    this.host.on('new_message', (data) => {
-      bridge.send(ReceiveMessageEvent.create(data as Message));
+    this.host.on('new_message', (data: Message) => {
+      messageStore.addMessage(data);
     });
     this.host.on('update_message', (data) => {
-      bridge.send(UpdateMessageEvent.create(data as Message));
+      messageStore.updateMessage(data);
     });
     this.host.on('dev_application_started', (app: ApplicationWithCommands) => {
-      bridge.send(AddOrUpdateAppEvent.create(app));
+      applicationStore.addOrUpdateApp(app);
     });
     this.host.on(
       'dev_application_updated',
@@ -67,10 +62,10 @@ export class ClientSocker {
         shouldRefresh: boolean;
         application: ApplicationWithCommands;
       }) => {
-        bridge.send(AddOrUpdateAppEvent.create(data.application));
+        applicationStore.addOrUpdateApp(data.application);
     });
     this.host.on('dev_application_stopped', (id: string) => {
-      bridge.send(RemoveAppEvent.create(id));
+      applicationStore.removeApp(id);
     });
   }
 }

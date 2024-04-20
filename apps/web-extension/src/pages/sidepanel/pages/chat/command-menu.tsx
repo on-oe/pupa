@@ -1,21 +1,20 @@
-import { List, Tag } from "antd";
-import { useSnapshot } from "valtio";
-import { applicationStore } from "../../store";
+import { List, Tag } from 'antd';
+import { useApplication } from '../../hooks/use-application';
 
 export function CommandMenu(props: {
   selectedIndex: number;
   onSelect: (key: string) => void;
 }) {
   const { selectedIndex, onSelect } = props;
-  const allCommands = useSnapshot(applicationStore.allCommands);
+  const { allCommands } = useApplication();
 
   return (
     <List size="small" split={false}>
       {allCommands.map((cmd, i) => (
         <List.Item
-          key={getCommandKey(cmd.applicationId, cmd.id)}
-          className={`hover:bg-slate-200 cursor-pointer ${selectedIndex === i ? "bg-slate-200" : ""}`}
-          onClick={() => onSelect(getCommandKey(cmd.applicationId, cmd.id))}
+          key={getCommandKey(cmd.applicationId, cmd.name)}
+          className={`hover:bg-slate-200 cursor-pointer ${selectedIndex === i ? 'bg-slate-200' : ''}`}
+          onClick={() => onSelect(getCommandKey(cmd.applicationId, cmd.name))}
         >
           <List.Item.Meta
             title={
@@ -23,7 +22,7 @@ export function CommandMenu(props: {
                 <span>/{cmd.name} </span>
                 {(cmd.options || []).map((opt) => (
                   <Tag key={opt.name} bordered={false} className="scale-75">
-                    {opt.name}:{" "}
+                    {opt.name}:{' '}
                   </Tag>
                 ))}
               </p>
@@ -36,6 +35,6 @@ export function CommandMenu(props: {
   );
 }
 
-export function getCommandKey(appId: string, cmdId: string) {
-  return `${appId}-${cmdId}`;
+export function getCommandKey(appId: string, name: string) {
+  return `${appId}-${name}`;
 }
