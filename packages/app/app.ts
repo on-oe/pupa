@@ -169,7 +169,7 @@ class App {
   }
 
   private async served() {
-    let app = {
+    const app = {
       id: '',
       name: this.options.name,
       description: this.options.description,
@@ -180,27 +180,7 @@ class App {
         type: commander.type,
       })),
     };
-    const appPath = path.join(process.cwd(), '.pupa', 'app.json');
-    let isExist = false;
-    try {
-      await fs.access(appPath);
-      isExist = true;
-    } catch {
-      // ignore
-    }
-    if (!isExist) {
-      const { id } = await host.devStart(app);
-      app.id = id;
-      await fs.mkdir(path.dirname(appPath), { recursive: true });
-      await fs.writeFile(appPath, JSON.stringify(app, null, 2));
-    } else {
-      const appData = JSON.parse(await fs.readFile(appPath, 'utf-8'));
-      const id = appData.id;
-      const combined = Object.assign(appData, app, { id });
-      app = combined;
-      fs.writeFile(appPath, JSON.stringify(combined, null, 2));
-      await host.devUpdate(combined);
-    }
+    await host.devStart(app);
 
     process.on('exit', () => {
       host.devStop(app.id);

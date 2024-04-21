@@ -28,7 +28,7 @@ export function MessageList() {
         <MessageItem
           key={message.id}
           avatar={message.user.avatar}
-          username={message.user.username}
+          username={message.user.name}
         >
           <MessageComponent message={message} />
         </MessageItem>

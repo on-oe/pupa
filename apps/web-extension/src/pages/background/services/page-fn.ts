@@ -3,6 +3,7 @@ import {
   type Interaction,
   type IRCResponseDataOfPageFn,
   type InteractionData,
+  CommandType,
 } from "@pupa/universal/types";
 import { fetcher } from "./fetcher";
 
@@ -102,7 +103,7 @@ async function assembleJsCode(options: ExecutePageFnOptions) {
       globalThis.page = page;
 
       function postResult(result) {
-        const data = { type: result.type, data: { id: "${name}", name: "${name}", options: result.options }, channel_id: "${cid}", application_id: "${appid}"};
+        const data = { type: result.type, data: { type: ${CommandType.PAGE_FUNCTION}, name: "${name}", options: result.options }, channel_id: "${cid}", application_id: "${appid}"};
         chrome.runtime.sendMessage({ type: "${PageFnMessageType.PAGE_FN_EVENT}", data });
       }
 
