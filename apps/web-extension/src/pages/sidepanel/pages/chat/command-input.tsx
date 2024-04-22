@@ -110,17 +110,24 @@ export function CommandInput() {
   };
 
   async function onSend() {
+    let channel = currentChannel;
+    if (!channel) {
+      channel = await addChannel({
+        name: `Chat for ${currentCommand?.name || 'New Chat'}`,
+      });
+    }
     if (currentCommand) {
-      if (!currentChannel) {
-        const channel = await addChannel({
-          name: `Chat for ${currentCommand.name}`,
-        });
-        onSlashCommand(channel);
-      } else {
-        onSlashCommand(currentChannel);
-      }
+      onSlashCommand(channel);
+    } else {
+      sendMessage(channel);
     }
     resetInput();
+  }
+
+  function sendMessage(channel: Channel) {
+    if (input.length > 0) {
+      channelStore.sendMessage(input, channel.id);
+    }
   }
 
   async function onSlashCommand(channel: Channel) {

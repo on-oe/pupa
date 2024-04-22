@@ -15,6 +15,30 @@ export class ClientSocker {
     return this.socket;
   }
 
+  private handlers = {
+    execute_page_fn: (data: ExecutePageFnOptions) => {
+      pageFn.execute(data);
+    },
+    new_message: (data: Message) => {
+      messageStore.addMessage(data);
+    },
+    update_message: (data: Message) => {
+      messageStore.updateMessage(data);
+    },
+    dev_application_started: (app: ApplicationWithCommands) => {
+      applicationStore.addOrUpdateApp(app);
+    },
+    dev_application_updated: (data: {
+      shouldRefresh: boolean;
+      application: ApplicationWithCommands;
+    }) => {
+      applicationStore.addOrUpdateApp(data.application);
+    },
+    dev_application_stopped: (id: string) => {
+      applicationStore.removeApp(id);
+    },
+  };
+
   async connect() {
     const cookie = await chrome.cookies.get({
       url: 'http://localhost:3000',
@@ -57,28 +81,4 @@ export class ClientSocker {
       this.host.off(event, handler);
     });
   }
-
-  private handlers = {
-    execute_page_fn: (data: ExecutePageFnOptions) => {
-      pageFn.execute(data);
-    },
-    new_message: (data: Message) => {
-      messageStore.addMessage(data);
-    },
-    update_message: (data: Message) => {
-      messageStore.updateMessage(data);
-    },
-    dev_application_started: (app: ApplicationWithCommands) => {
-      applicationStore.addOrUpdateApp(app);
-    },
-    dev_application_updated: (data: {
-      shouldRefresh: boolean;
-      application: ApplicationWithCommands;
-    }) => {
-      applicationStore.addOrUpdateApp(data.application);
-    },
-    dev_application_stopped: (id: string) => {
-      applicationStore.removeApp(id);
-    },
-  };
 }

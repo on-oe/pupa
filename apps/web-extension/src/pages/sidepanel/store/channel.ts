@@ -22,6 +22,12 @@ export const channelStore = {
   deleteChannel(channelId: string) {
     bridge.send('deleteChannel', channelId);
   },
+  sendMessage(message: string, channelId: string) {
+    bridge.send('sendMessage', {
+      content: message,
+      channelId,
+    });
+  },
 };
 
 export const messagesAtom = atom<Message[]>([]);

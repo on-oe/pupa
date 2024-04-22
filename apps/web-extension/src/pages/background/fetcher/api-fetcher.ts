@@ -94,6 +94,14 @@ export class ApiFetcher extends BaseAbortFetcher implements BaseFetcher {
     });
   }
 
+  sendMessage(payload: {
+    content: string;
+    channelId: string;
+    applicationId?: string;
+  }) {
+    return this.host.post('channel/message', { json: payload }).json<Message>();
+  }
+
   get abort(): () => boolean {
     return this.abort;
   }

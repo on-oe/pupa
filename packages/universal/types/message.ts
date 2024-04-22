@@ -9,7 +9,6 @@ export interface Message {
   created_at: number;
   updated_at?: number;
   elements?: MessageElement[];
-  bot?: boolean;
   interaction_id?: string;
 }
 

@@ -6,6 +6,7 @@ import {
   currentChannelAtom,
   messagesAtom,
   store,
+  userStore,
 } from './store';
 
 export const applicationContext = {
@@ -47,6 +48,10 @@ bridge.on('messageUpdated', (message) => {
     }
     return [...messages];
   });
+});
+
+bridge.on('adminChanged', (admin) => {
+  userStore.setUser(admin);
 });
 
 export default bridge;

@@ -7,6 +7,7 @@ import {
   messagesAtom,
 } from './store';
 import { fetcher } from './services/fetcher';
+import { admin } from './services/admin';
 
 export const channelContext = {
   updateCurrentChannel(id: string) {
@@ -53,6 +54,7 @@ bridge.on('loadSidePanel', () => {
   bridge.send('channelsChanged', channels);
   bridge.send('currentChannelChanged', currentChannel);
   bridge.send('messagesChanged', messages);
+  bridge.send('adminChanged', admin.info);
 });
 
 bridge.on('addChannel', (opt) => {
@@ -62,6 +64,10 @@ bridge.on('addChannel', (opt) => {
 bridge.on('execSlashCommand', (payload) => {
   const { channelId, applicationId, data } = payload;
   fetcher.execSlashCommand(applicationId, channelId, data);
+});
+
+bridge.on('sendMessage', (payload) => {
+  fetcher.sendMessage(payload);
 });
 
 export default bridge;

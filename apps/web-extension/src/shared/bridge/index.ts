@@ -3,6 +3,7 @@ import type {
   Channel,
   InteractionData,
   Message,
+  User,
 } from '@pupa/universal/types';
 import { Bridge } from './bridge';
 
@@ -11,6 +12,7 @@ interface Events {
   applicationsChanged: ApplicationWithCommands[];
   channelsChanged: Channel[];
   messagesChanged: Message[];
+  adminChanged: User;
   currentChannelChanged: Channel | null;
   addChannel: { name: string };
   deleteChannel: string;
@@ -21,6 +23,7 @@ interface Events {
     data: InteractionData;
   };
   messageUpdated: Message;
+  sendMessage: { content: string; channelId: string };
 }
 
 interface SenderResponses {
