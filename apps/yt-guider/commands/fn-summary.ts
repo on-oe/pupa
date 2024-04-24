@@ -29,7 +29,7 @@ export default definePageFuncCommand({
     }
     const transcript = await getTranscriptPart(videoId, time);
     const agent = interaction.createAgent(
-      '帮我创建一个辅助概括视频片段内容的助手',
+      '帮我创建一个用中文辅助概括视频片段内容的助手',
     );
     agent.reply(transcript);
   },
