@@ -14,12 +14,15 @@ function send(id: string, token: string) {
       },
       body: JSON.stringify(data),
     });
-  }
+  };
 }
 
 export class InteractionContext {
   private send: (msg: InteractionResponse, isClose?: boolean) => void;
-  constructor(private dto: Interaction) {
+  constructor(
+    private dto: Interaction,
+    private options: { endpoint: string },
+  ) {
     this.dto = dto;
     this.send = send(dto.id, dto.token);
   }
@@ -105,7 +108,7 @@ export class InteractionContext {
   }
 
   async execPageFn(name: string) {
-    const uri = process.env.DEV_ENDPOINT + '/dist/' + name + '.js';
+    const uri = this.options.endpoint + '/dist/' + name + '.js';
     await this.send(
       {
         type: InteractionResponseType.EXECUTE_PAGE_FUNCTION,

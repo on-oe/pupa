@@ -1,19 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {
-  CommandType,
-  type Interaction,
-  type InteractionResponse,
-  InteractionType,
-} from '@pupa/universal/types';
+import { CommandType, InteractionType } from '@pupa/universal/types';
 import OpenAI from 'openai';
 import { InteractionContext } from './interaction';
 import type { Commander } from './command';
-import { host } from './host';
+import { Host } from './host';
 import express, { type Express } from 'express';
 import cors from 'cors';
-
-const CON_MAX_TIME = 30000;
 
 const llm = new OpenAI();
 
@@ -24,6 +17,7 @@ interface CreateAppOptions {
   matches?: string[];
   commanders?: Commander[];
   onMessage?: (interaction: InteractionContext) => void;
+  onPing?: (interaction: InteractionContext) => void;
 }
 
 export function createApp(options: CreateAppOptions) {
@@ -75,39 +69,69 @@ class App {
     return allCommanders.find((commander) => commander.name === commanderName);
   }
 
-  async serve(options: { port?: number; fetch: (host: Express) => void }) {
+  async serve(
+    options: { port?: number; fetch?: (host: Express) => void } = {},
+  ) {
     const { port = 6700 } = options;
+
+    // if port is being used, try port + 1
+
     const app = express();
     app.use(cors());
     app.use(express.json());
     app.use(express.json({ type: 'application/json' }));
-    options.fetch(app);
+    options.fetch?.(app);
     await this.loadCommands();
-    this.run(app, port);
-    console.log('App is running on port', port);
-    await this.served();
+    const finalPort = await this.run(app, port);
+    await this.served(finalPort);
   }
 
   private run(app: Express, port: number) {
-    app.post('*', (req, res) => {
-      const ircData = req.body;
-      // const send = (msg: InteractionResponse) => {
-      //   res.json(msg);
-      // };
-      const interaction = new InteractionContext(ircData);
-      this.onInteraction(interaction);
-      res.end();
-    });
-    app.get(/\/dist\/.*/, (req, res) => {
-      const filePath = path.join(process.cwd(), req.url);
-      res.sendFile(filePath);
-    });
+    let finalPort = port;
+    return new Promise<number>((resolve, reject) => {
+      app.post('*', (req, res) => {
+        const ircData = req.body;
+        const interaction = new InteractionContext(ircData, {
+          endpoint: `http://localhost:${finalPort}`,
+        });
+        this.onInteraction(interaction);
+        res.end();
+      });
+      app.get(/\/dist\/.*/, (req, res) => {
+        const filePath = path.join(process.cwd(), req.url);
+        res.sendFile(filePath);
+      });
 
-    app.listen(port);
+      const startServer = (port: number) => {
+        app
+          .listen(port, () => {
+            console.log('App is running on port', port);
+            finalPort = port;
+            resolve(port);
+          })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .on('error', (err: any) => {
+            if (err.code === 'EADDRINUSE') {
+              console.log(
+                `Port ${port} is already in use, trying port ${port + 1}`,
+              );
+              startServer(port + 1);
+            } else {
+              console.error(`Error starting server: ${err}`);
+              reject(err);
+            }
+          });
+      };
+
+      startServer(port);
+    });
   }
 
   private async onInteraction(interaction: InteractionContext) {
     switch (interaction.type) {
+      case InteractionType.PING:
+        this.options.onPing?.(interaction);
+        break;
       case InteractionType.APPLICATION_COMMAND:
       case InteractionType.PAGE_FUNCTION_MESSAGE:
         {
@@ -133,6 +157,11 @@ class App {
 
   private async loadCommands() {
     const dirPath = path.join(process.cwd(), 'commands');
+    const isExists = await fs
+      .access(dirPath)
+      .then(() => true)
+      .catch(() => false);
+    if (!isExists) return;
     const files = await fs.readdir(dirPath);
     const cmdFiles = files.filter(
       (file) =>
@@ -168,12 +197,14 @@ class App {
     }
   }
 
-  private async served() {
+  private async served(port: number) {
+    const host = new Host(port);
     const app = {
       id: '',
       name: this.options.name,
       description: this.options.description,
       icon: this.options.icon,
+      interactionEndpoint: host.endpoint,
       commands: Array.from(this.commanders.values()).map((commander) => ({
         name: commander.name,
         description: commander.description,

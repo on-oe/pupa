@@ -1,7 +1,13 @@
 import type { Application } from '@pupa/universal/types';
 import ky from 'ky';
 
-class Host {
+export class Host {
+  endpoint: string;
+  constructor(private readonly port: number) {
+    this.port = port;
+    this.endpoint = `http://localhost:${port}`;
+  }
+
   private host = ky.create({
     prefixUrl: 'http://localhost:3000/api/',
     headers: {
@@ -13,7 +19,6 @@ class Host {
     return this.host
       .post('application/dev-application-started', {
         json: {
-          endpoint: process.env.DEV_ENDPOINT,
           application: app,
         },
       })
@@ -35,5 +40,3 @@ class Host {
     return this.host.post(`application/dev-application-stopped/${id}`).json();
   }
 }
-
-export const host = new Host();

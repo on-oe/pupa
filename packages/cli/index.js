@@ -12,12 +12,15 @@ import { dev } from './dev.js';
 const program = new Command();
 
 program
-  .command('new')
+  .command('create')
   .description('Create a new app')
   .argument('[appName]', 'app name')
   .action(async (appName) => {
     try {
-      const templatePath = path.join(import.meta.url, '../template');
+      const templatePath = path.join(
+        new URL(import.meta.url).pathname,
+        '../template',
+      );
       const targetPath = path.join(process.cwd(), appName);
 
       if (existsSync(targetPath)) {
@@ -57,7 +60,6 @@ program
       env: {
         ...process.env,
         NODE_ENV: 'development',
-        DEV_ENDPOINT: 'http://localhost:6700',
         PUPA_API_KEY: key,
       },
       stdio: 'inherit',

@@ -1,0 +1,16 @@
+{
+  "name": "dark-sight",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run index.ts"
+  },
+  "dependencies": {
+    "@pupa/app": "workspace:*",
+    "@pupa/universal": "workspace:*",
+    "darkreader": "^4.9.83"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

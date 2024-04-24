@@ -13,6 +13,13 @@ export async function dev(port) {
       console.log('No page functions found.');
       return;
     }
+    
+    // reset destDir
+    if (fs.existsSync(destDir)) {
+      fs.rmSync(destDir, { recursive: true });
+    }
+    fs.mkdirSync(destDir);
+
     const files = fs.readdirSync(srcDir);
 
     // check duplicate file name
@@ -69,7 +76,6 @@ export async function dev(port) {
         }).outputText;
         fs.writeFileSync(destFilePath, js);
       } else {
-        // just copy
         const destFilePath = path.resolve(destDir, file);
         fs.copyFileSync(filePath, destFilePath);
       }

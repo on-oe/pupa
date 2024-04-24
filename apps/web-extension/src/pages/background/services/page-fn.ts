@@ -35,7 +35,7 @@ class PageFnService {
 
   constructor() {
     chrome.userScripts.configureWorld({
-      csp: "script-src 'self' 'unsafe-eval' http://localhost:*",
+      csp: "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://esm.run https://cdn.jsdelivr.net/npm/*",
       messaging: true,
     });
 
