@@ -4,14 +4,11 @@ import {
   PlusSquareFilled,
   SendOutlined,
 } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
+import { Avatar, Button, List, Popover } from 'antd';
 import { useEffect, useState } from 'react';
-import type { Channel } from '@pupa/universal/types';
-import { useInputMenu } from '../../hooks/use-input-menu';
+import type { Channel, Command } from '@pupa/universal/types';
 import { isEnterKey } from '../../utils/keyboard';
 import { AutoSizeTextarea } from '../../components/auto-size-textarea';
-import { AppMenu } from './app-menu';
-import { CommandMenu } from './command-menu';
 import { CommandInputStatus } from './command-input-status';
 import { useApplication } from '../../hooks/use-application';
 import { useChannel } from '../../hooks/use-channel';
@@ -27,24 +24,7 @@ import {
   isShowCommandPanelAtom,
 } from './state';
 import { channelStore, applicationStore } from '../../store';
-
-// function getSlashCommandDataFromInteraction(interaction: Interaction) {
-//   const command = interaction.data!;
-//   return {
-//     application: {
-//       id: interaction.application_id,
-//       name: interaction.application_id,
-//       description: "",
-//       icon: "",
-//     },
-//     command: {
-//       name: command.name,
-//       description: "",
-//       type: command.type,
-//     },
-//     interactionId: interaction.id,
-//   };
-// }
+import { InputMenu, interceptKeydown } from './input-menu';
 
 export function CommandInput() {
   const [, setIsOpenHistory] = useAtom(isOpenHistoryAtom);
@@ -57,30 +37,23 @@ export function CommandInput() {
   const [currentCommandValOpts, setCurrentCommandValOpts] = useAtom(
     currentCommandValOptsAtom,
   );
-  const { applications, allCommands, getAppCommand, getApplication } =
+  const [commands, setCommands] = useState<Command[]>([]);
+  const { applications, getAppCommand, getApplication } =
     useApplication();
   const { addChannel, currentChannel } = useChannel();
   const [placeholder, setPlaceholder] = useState<string>('');
-  const { onKeydown: onSelectAppKeydown, selectedIndex: selectedAppIndex } =
-    useInputMenu({
-      length: applications.length,
-      onSelect: (index) => {
-        setCurrentApp(applications[index]);
-      },
-    });
-  const { onKeydown: onSelectCmdKeydown, selectedIndex: selectedCmdIndex } =
-    useInputMenu({
-      length: allCommands.length,
-      onSelect: (index) => {
-        const cmd = allCommands[index];
-        setCurrentCommand(cmd);
-        setInput('');
-      },
-    });
 
   useEffect(() => {
     if (currentApp) {
-      setPlaceholder(`How can ${currentApp.name} assist you today?`);
+      setCommands(currentApp.commands);
+    } else {
+      setCommands([]);
+    }
+  }, [currentApp]);
+
+  useEffect(() => {
+    if (currentApp && !currentCommand) {
+      setPlaceholder('press / for command, or type to chat...')
     } else if (currentCommand) {
       if (!currentOption)
         setPlaceholder(`⌘ + Enter to send ${currentCommand.name} command`);
@@ -105,7 +78,6 @@ export function CommandInput() {
 
   const resetInput = () => {
     setInput('');
-    setCurrentApp(null);
     setCurrentCommand(null);
   };
 
@@ -131,22 +103,15 @@ export function CommandInput() {
   }
 
   async function onSlashCommand(channel: Channel) {
-    if (!currentCommand) return;
-    const application = getApplication(currentCommand.applicationId)!;
+    if (!currentCommand || !currentApp) return;
     applicationStore.execSlashCommand({
-      applicationId: application.id,
+      applicationId: currentApp.id,
       channelId: channel.id,
       data: {
         ...currentCommand,
         options: currentCommandValOpts,
       },
     });
-    // store.state.runningCommand = {
-    //   application,
-    //   command: currentCommand,
-    // };
-    // store.state.runningCommand =
-    //   getSlashCommandDataFromInteraction(interaction);
   }
 
   const handleAtClick = () => {
@@ -182,28 +147,17 @@ export function CommandInput() {
   }
 
   function handleMsgKeydown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (isShowAppPanel) {
-      onSelectAppKeydown(e);
-    } else if (isShowCommandPanel) {
-      onSelectCmdKeydown(e);
-    } else if (input.length === 0 && e.key === 'Backspace') {
-      resetInput();
+    if (input.length === 0 && e.key === 'Backspace') {
+      if (currentCommand) {
+        setCurrentCommand(null);
+      } else {
+        setCurrentApp(null);
+      }
     } else if (isEnterKey(e) && currentCommand && input.length > 0) {
       e.preventDefault();
       submitOption(input);
     } else if (isEnterKey(e) && (e.metaKey || e.ctrlKey)) {
       onSend();
-    }
-  }
-
-  function handleSelectCommand(key: string) {
-    const [appId, cmdId] = key.split('-');
-    const cmd = getAppCommand(appId, cmdId);
-    if (cmd) {
-      setCurrentCommand({ applicationId: appId, ...cmd });
-      if (cmd.options?.length === 0) {
-        onSend();
-      }
     }
   }
 
@@ -238,12 +192,21 @@ export function CommandInput() {
         arrow={false}
         content={
           isShowAppPanel ? (
-            <AppMenu selectedIndex={selectedAppIndex} />
+            <InputMenu
+              list={applications}
+              Meta={(app) => <List.Item.Meta avatar={<Avatar src={app.icon} />} title={app.name} description={app.description} />}
+              onSelect={app => {
+                setCurrentApp(app);
+                setInput('');
+              }} />
           ) : (
-            <CommandMenu
-              selectedIndex={selectedCmdIndex}
-              onSelect={handleSelectCommand}
-            />
+            <InputMenu
+              list={commands}
+              Meta={(cmd) => <List.Item.Meta title={'/' + cmd.name} description={cmd.description} />}
+              onSelect={cmd => {
+                setCurrentCommand(cmd);
+                setInput('');
+              }} />
           )
         }
       >
@@ -252,13 +215,13 @@ export function CommandInput() {
           <AutoSizeTextarea
             className="resize-none w-full outline-none bg-transparent overflow-auto min-h-[60px]"
             placeholder={
-              placeholder || "press '@' for chat, '/' for commands..."
+              placeholder || "press '@' for Copilot, or type to chat..."
             }
             minHeight={60}
             maxHeight={120}
             value={input}
             onChange={handleMsgChange}
-            onKeyDown={handleMsgKeydown}
+            onKeyDown={interceptKeydown(handleMsgKeydown)}
           />
           <div className="flex py-1 justify-between items-center">
             <div className="flex items-center">

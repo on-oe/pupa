@@ -6,15 +6,13 @@ import type {
 import { atom } from 'jotai';
 import { store } from '../../store';
 
-type CommandWithApplication = Command & { applicationId: string };
-
 export const inputAtom = atom('');
 export const isShowAppPanelAtom = atom(false);
 export const isShowCommandPanelAtom = atom(false);
 
 export const isOpenHistoryAtom = atom(false);
 export const currentAppAtom = atom<ApplicationWithCommands | null>(null);
-export const currentCommandAtom = atom<CommandWithApplication | null>(null);
+export const currentCommandAtom = atom<Command | null>(null);
 
 export const currentOptionAtom = atom<CommandOption | null>(null);
 export const currentCommandValOptsAtom = atom<
@@ -43,7 +41,7 @@ store.sub(inputAtom, () => {
   const currentApp = store.get(currentAppAtom);
   const currentCommand = store.get(currentCommandAtom);
 
-  if (input.startsWith('/') && !currentCommand) {
+  if (input.startsWith('/') && !currentCommand && currentApp) {
     store.set(isShowCommandPanelAtom, true);
   } else {
     store.set(isShowCommandPanelAtom, false);

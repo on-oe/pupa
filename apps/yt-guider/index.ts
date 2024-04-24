@@ -2,8 +2,8 @@ import { createApp } from '@pupa/app';
 import { getTranscript } from './services/transcript';
 
 const app = createApp({
-  name: 'yt-guider',
-  description: 'help you to watch youtube videos more efficiently.',
+  name: '油管英语教练',
+  description: '帮助 YouTube 视频观看者更有效地观看视频，学习英语。',
   icon: 'https://avatar.vercel.sh/pupa.svg?text=PUPA',
 });
 
