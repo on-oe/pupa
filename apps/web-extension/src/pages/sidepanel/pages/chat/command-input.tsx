@@ -53,7 +53,7 @@ export function CommandInput() {
 
   useEffect(() => {
     if (currentApp && !currentCommand) {
-      setPlaceholder('press / for command, or type to chat...')
+      setPlaceholder('press / for command, @ for Copilot, or type to chat...')
     } else if (currentCommand) {
       if (!currentOption)
         setPlaceholder(`⌘ + Enter to send ${currentCommand.name} command`);
@@ -197,6 +197,7 @@ export function CommandInput() {
               Meta={(app) => <List.Item.Meta avatar={<Avatar src={app.icon} />} title={app.name} description={app.description} />}
               onSelect={app => {
                 setCurrentApp(app);
+                setCurrentCommand(null);
                 setInput('');
               }} />
           ) : (

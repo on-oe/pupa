@@ -39,15 +39,14 @@ store.sub(currentCommandAtom, () => {
 store.sub(inputAtom, () => {
   const input = store.get(inputAtom);
   const currentApp = store.get(currentAppAtom);
-  const currentCommand = store.get(currentCommandAtom);
 
-  if (input.startsWith('/') && !currentCommand && currentApp) {
+  if (input.startsWith('/') && currentApp) {
     store.set(isShowCommandPanelAtom, true);
   } else {
     store.set(isShowCommandPanelAtom, false);
   }
 
-  if (input.startsWith('@') && !currentApp) {
+  if (input.startsWith('@')) {
     store.set(isShowAppPanelAtom, true);
   } else {
     store.set(isShowAppPanelAtom, false);
