@@ -16,6 +16,7 @@ export const enum CommandType {
   USER = 2,
   MESSAGE = 3,
   PAGE_FUNCTION = 4,
+  PAGE_RECYCLE = 5,
 }
 
 export interface Command {

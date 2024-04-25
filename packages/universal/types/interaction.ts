@@ -26,6 +26,11 @@ export const enum InteractionType {
   APPLICATION_COMMAND_AUTOCOMPLETE = 4,
   MODEL_SUBMIT = 5,
   PAGE_FUNCTION_MESSAGE = 6,
+  PAGE_RECYCLE = 7,
+}
+
+export const enum PageRecycleEvent {
+  OPEN = 'open',
 }
 
 export type InteractionData = {

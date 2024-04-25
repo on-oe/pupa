@@ -24,6 +24,9 @@ interface Events {
   };
   messageUpdated: Message;
   sendMessage: { content: string; channelId: string };
+
+  // from content script
+  openPage: { href: string };
 }
 
 interface SenderResponses {

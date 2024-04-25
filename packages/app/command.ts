@@ -1,4 +1,4 @@
-import { CommandType, type Command } from "@pupa/universal/types";
+import { CommandType, PageRecycleEvent, type Command } from "@pupa/universal/types";
 import type { InteractionContext } from "./interaction";
 
 export interface Commander extends Command {
@@ -10,7 +10,6 @@ type CommandConfig = Omit<Commander, "type" | "id">;
 export function defineSlashCommand(config: CommandConfig): Commander {
   return {
     ...config,
-    id: config.name,
     type: CommandType.CHAT_INPUT,
   };
 }
@@ -18,7 +17,14 @@ export function defineSlashCommand(config: CommandConfig): Commander {
 export function definePageFuncCommand(config: CommandConfig): Commander {
   return {
     ...config,
-    id: config.name,
     type: CommandType.PAGE_FUNCTION,
+  };
+}
+
+export function definePageRecycleCommand(event: PageRecycleEvent, config: Omit<CommandConfig, 'name'>): Commander {
+  return {
+    ...config,
+    name: event,
+    type: CommandType.PAGE_RECYCLE,
   };
 }

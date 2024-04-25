@@ -70,4 +70,8 @@ bridge.on('sendMessage', (payload) => {
   fetcher.sendMessage(payload);
 });
 
+bridge.on('openPage', (payload) => {
+  fetcher.openPage(payload);
+});
+
 export default bridge;

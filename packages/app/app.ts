@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import { CommandType, InteractionType } from '@pupa/universal/types';
 import OpenAI from 'openai';
@@ -28,6 +27,8 @@ class App {
   private commanders = new Map<string, Commander>();
 
   private pfCommanders = new Map<string, Commander>();
+
+  private prCommanders = new Map<string, Commander>();
 
   constructor(private options: CreateAppOptions) {
     this.options = options;
@@ -73,8 +74,6 @@ class App {
     options: { port?: number; fetch?: (host: Express) => void } = {},
   ) {
     const { port = 6700 } = options;
-
-    // if port is being used, try port + 1
 
     const app = express();
     app.use(cors());
@@ -134,6 +133,7 @@ class App {
         break;
       case InteractionType.APPLICATION_COMMAND:
       case InteractionType.PAGE_FUNCTION_MESSAGE:
+      case InteractionType.PAGE_RECYCLE:
         {
           const commander = this.getCommander(interaction);
           commander?.execute(interaction);
@@ -151,31 +151,19 @@ class App {
       commander = this.pfCommanders.get(interaction.commandName);
     } else if (interaction.type === InteractionType.APPLICATION_COMMAND) {
       commander = this.commanders.get(interaction.commandName);
+    } else if (interaction.type === InteractionType.PAGE_RECYCLE) {
+      commander = this.prCommanders.get(interaction.commandName);
     }
     return commander;
   }
 
   private async loadCommands() {
-    const dirPath = path.join(process.cwd(), 'commands');
-    const isExists = await fs
-      .access(dirPath)
-      .then(() => true)
-      .catch(() => false);
-    if (!isExists) return;
-    const files = await fs.readdir(dirPath);
-    const cmdFiles = files.filter(
-      (file) =>
-        file.endsWith('.ts') &&
-        !file.endsWith('.d.ts') &&
-        !file.endsWith('.test.ts'),
-    );
-    const tasks = cmdFiles.map(async (file) => {
-      const { default: commander } = (await import(`${dirPath}/${file}`)) as {
-        default: Commander;
-      };
+    const commandFilePath = path.join(process.cwd(), 'commands', 'index.ts');
+    const module = await import(commandFilePath);
+    Object.keys(module).forEach((key) => {
+      const commander = module[key];
       this.attachCommander(commander);
     });
-    return Promise.all(tasks);
   }
 
   private attachCommander(commander: Commander) {
@@ -193,6 +181,13 @@ class App {
         }
         this.pfCommanders.set(commander.name, commander);
         console.log('Loaded page function:', commander.name);
+        break;
+      case CommandType.PAGE_RECYCLE:
+        if (this.prCommanders.has(commander.name)) {
+          throw new Error(`Duplicate commander name: ${commander.name}`);
+        }
+        this.prCommanders.set(commander.name, commander);
+        console.log('Loaded page recycle:', commander.name);
         break;
     }
   }

@@ -94,6 +94,12 @@ export class ApiFetcher extends BaseAbortFetcher implements BaseFetcher {
     });
   }
 
+  openPage(data: { href: string }) {
+    return this.host.post('interaction/open_page', {
+      json: data,
+    });
+  }
+
   sendMessage(payload: {
     content: string;
     channelId: string;
