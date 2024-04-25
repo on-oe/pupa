@@ -1,6 +1,6 @@
 import { defineSlashCommand } from '@pupa/app';
 import { definePageRecycleCommand } from '../../../packages/app/command';
-import { PageRecycleEvent } from '@pupa/universal/types';
+import { CommandOptionType, PageRecycleEvent } from '@pupa/universal/types';
 
 export const open = defineSlashCommand({
   name: '护眼',
@@ -21,6 +21,26 @@ export const close = defineSlashCommand({
 export const auto = definePageRecycleCommand(PageRecycleEvent.OPEN, {
   description: '',
   execute: async (interaction) => {
+    const settings = await interaction.settings.get();
+    if (settings && !settings.auto) return;
+    if (!settings) await interaction.settings.set({ auto: true });
     interaction.execPageFn('start');
   },
 });
+
+export const setting = defineSlashCommand({
+  name: '设置',
+  description: '设置护眼模式',
+  options: [
+    {
+      name: 'auto',
+      description: '自动开启护眼模式',
+      type: CommandOptionType.BOOLEAN,
+      required: true,
+    },
+  ],
+  execute: async (interaction) => {
+    const auto = Boolean(interaction.commandOptions?.find((option) => option.name === 'auto')?.value);
+    await interaction.settings.set({ auto });
+  }
+})

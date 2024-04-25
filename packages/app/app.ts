@@ -204,6 +204,7 @@ class App {
         name: commander.name,
         description: commander.description,
         type: commander.type,
+        options: commander.options,
       })),
     };
     await host.devStart(app);

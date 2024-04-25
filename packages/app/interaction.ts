@@ -17,6 +17,29 @@ function send(id: string, token: string) {
   };
 }
 
+async function getSettings(applicationId: string, userId: string) {
+  const data = await fetch(`http://localhost:3000/api/application/settings/${applicationId}/${userId}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + process.env.PUPA_API_KEY,
+    },
+  })
+    .then((res) => res.json()) as { value: string };
+
+  return JSON.parse(data.value);
+}
+
+function setSettings(applicationId: string, userId: string, data: unknown) {
+  return fetch(`http://localhost:3000/api/application/settings/${applicationId}/${userId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + process.env.PUPA_API_KEY,
+    },
+    body: JSON.stringify({ value: JSON.stringify(data) }),
+  });
+}
+
 export class InteractionContext {
   private send: (msg: InteractionResponse, isClose?: boolean) => void;
   constructor(
@@ -67,6 +90,19 @@ export class InteractionContext {
 
   get isPageFuncCommand() {
     return this.dto.type === InteractionType.PAGE_FUNCTION_MESSAGE;
+  }
+
+  get settings() {
+    return {
+      get: () => {
+        if (!this.dto.user) return null;
+        return getSettings(this.dto.application_id, this.dto.user.id);
+      },
+      set: (data: unknown) => {
+        if (!this.dto.user) return null;
+        return setSettings(this.dto.application_id, this.dto.user.id, data);
+      }
+    }
   }
 
   followUp(msg: InteractionResponse) {
