@@ -146,7 +146,7 @@ export class App {
       } else if (filePath.match(/\.ts|js?$/)) {
         const bundle = await rollup({
           input: filePath,
-          external: [],
+          external: (id) => id.startsWith('https://'),
           plugins: [
             replacePlugin({
               __PUPA_APPLICATION_ID__: applicationId,

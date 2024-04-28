@@ -21,7 +21,6 @@
   "dependencies": {
     "@pupa/universal": "workspace:*",
     "@rollup/plugin-alias": "^5.1.0",
-    "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.5",
     "@vitejs/plugin-react": "^4.2.1",
     "ky": "^1.2.3",
