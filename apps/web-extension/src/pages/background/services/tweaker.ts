@@ -139,7 +139,7 @@ class TweakerService {
     return `
       (function() {
         if (!!${Number(once)} && __pupaExtListenerMgr__['${applicationId}:${name}']) {
-          chrome.runtime.sendMessage({ type: "${PageTweakEvent.REPEAT}", data: { applicationId: "${applicationId}", data: { name: "${name}", type: ${PageTweakEvent.REPEAT} } } });
+          chrome.runtime.sendMessage({ type: "${PageTweakEvent.REPEAT}", data: { applicationId: "${applicationId}", data: { name: "${name}", type: "${PageTweakEvent.REPEAT}" } } });
           return;
         }
         if (!__pupaExtListenerMgr__['${applicationId}:${name}']) {

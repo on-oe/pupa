@@ -28,7 +28,7 @@ const app = await createApp({
     } else if (interaction.type === InteractionType.PAGE_TWEAK_EVENT) {
       if (
         interaction.data.name === 'train' &&
-        interaction.data === PageTweakEvent.REPEAT
+        interaction.data.type === PageTweakEvent.REPEAT
       ) {
         interaction.settings.set({ training: true });
       }
