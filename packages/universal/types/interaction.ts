@@ -3,6 +3,7 @@ import type {
   CommandType,
   Message,
   MessageElement,
+  PageTweak,
   User,
 } from '.';
 
@@ -12,8 +13,9 @@ export interface Interaction {
   type: InteractionType;
   channel_id: string;
   token: string;
-  data?: InteractionData;
   user?: User;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: InteractionData | any;
   message?: Message;
   created_at: number;
 }
@@ -25,12 +27,13 @@ export const enum InteractionType {
   MESSAGE_COMPONENT = 3,
   APPLICATION_COMMAND_AUTOCOMPLETE = 4,
   MODEL_SUBMIT = 5,
-  PAGE_FUNCTION_MESSAGE = 6,
-  PAGE_RECYCLE = 7,
+  PAGE_TWEAK_MESSAGE = 6,
+  PAGE_TWEAK_EVENT = 7,
 }
 
-export const enum PageRecycleEvent {
-  OPEN = 'open',
+export enum PageTweakEvent {
+  REPEAT = 'repeat',
+  MESSAGE = 'message',
 }
 
 export type InteractionData = {
@@ -55,11 +58,15 @@ export type InteractionResponse =
     }
   | {
       type: InteractionResponseType.EXECUTE_PAGE_FUNCTION;
-      data: IRCResponseDataOfPageFn;
+      data: IRCResponseDataOfTweak;
     }
   | {
       type: InteractionResponseType.AGENT_MESSAGE;
       data: IRCResponseOfAgentMessage;
+    }
+  | {
+      type: InteractionResponseType.UPDATE_SETTINGS;
+      data: IRCResponseOfUpdateSettings;
     };
 
 export const enum InteractionResponseType {
@@ -70,19 +77,17 @@ export const enum InteractionResponseType {
   UPDATE_MESSAGE = 7,
   EXECUTE_PAGE_FUNCTION = 11,
   AGENT_MESSAGE = 12,
+  UPDATE_SETTINGS = 13,
 }
 
 export type InteractionResponseData =
   | IRCResponseDataOfMessage
   | IRCResponseDataOfCmdAutocomplete
-  | IRCResponseDataOfPageFn
-  | IRCResponseOfAgentMessage;
+  | IRCResponseDataOfTweak
+  | IRCResponseOfAgentMessage
+  | IRCResponseOfUpdateSettings;
 
-export interface IRCResponseDataOfPageFn {
-  content?: string;
-  name: string;
-  uri: string;
-}
+export type IRCResponseDataOfTweak = PageTweak;
 
 export interface IRCResponseDataOfCmdAutocomplete {
   choices: InteractionDataOption[];
@@ -97,4 +102,8 @@ export interface IRCResponseOfAgentMessage {
   content: string;
   prompt: string;
   stream: boolean;
+}
+
+export interface IRCResponseOfUpdateSettings {
+  value: string;
 }

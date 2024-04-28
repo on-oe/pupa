@@ -4,7 +4,7 @@ import type { SegmentType, TranslateTool } from '../types';
 export class ApiService {
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: page.env.ENDPOINT,
+      baseURL: import.meta.env.VITE_APP_HOST,
       headers: {
         Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`,
       },

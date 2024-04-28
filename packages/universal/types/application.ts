@@ -1,3 +1,9 @@
+export interface PageTweak {
+  name: string;
+  runAt: 'document-start' | 'document-end' | 'document-idle' | 'runtime';
+  once: boolean;
+}
+
 export interface Application {
   id: string;
   name: string;
@@ -5,6 +11,7 @@ export interface Application {
   icon: string;
   interactions_endpoint_url: string;
   commands: Command[];
+  tweaks: PageTweak[];
 }
 
 export interface ApplicationWithCommands extends Application {
@@ -16,7 +23,6 @@ export const enum CommandType {
   USER = 2,
   MESSAGE = 3,
   PAGE_FUNCTION = 4,
-  PAGE_RECYCLE = 5,
 }
 
 export interface Command {

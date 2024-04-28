@@ -4,8 +4,8 @@ import { createServer } from 'vite';
 import reactPlugin from '@vitejs/plugin-react';
 import typescript from 'typescript';
 
-const srcDir = path.resolve(process.cwd(), 'fns');
-const destDir = path.resolve(process.cwd(), 'dist');
+// const srcDir = path.resolve(process.cwd(), 'fns');
+// const destDir = path.resolve(process.cwd(), 'dist');
 
 export async function dev(port) {
   try {

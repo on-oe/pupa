@@ -8,11 +8,10 @@ import {
   InteractionType,
   type User,
 } from '@pupa/universal/types';
-import type { BaseFetcher } from './base-fetcher';
 import { BaseAbortFetcher } from './abort-fetcher';
 import ky from 'ky';
 
-export class ApiFetcher extends BaseAbortFetcher implements BaseFetcher {
+export class ApiFetcher extends BaseAbortFetcher {
   host = ky.create({
     prefixUrl: import.meta.env.VITE_API_URL,
   });
@@ -79,24 +78,14 @@ export class ApiFetcher extends BaseAbortFetcher implements BaseFetcher {
       })
       .json<Interaction>();
   }
-  postPageMessage(
-    applicationId: string,
-    channelId: string,
-    data: InteractionData,
-  ) {
+  postTweakMessage(message: {
+    type: InteractionType;
+    applicationId: string;
+    channelId: string;
+    data: unknown;
+  }) {
     return this.host.post('interaction/send', {
-      json: {
-        type: InteractionType.PAGE_FUNCTION_MESSAGE,
-        applicationId,
-        channelId,
-        data,
-      },
-    });
-  }
-
-  openPage(data: { href: string }) {
-    return this.host.post('interaction/open_page', {
-      json: data,
+      json: message,
     });
   }
 

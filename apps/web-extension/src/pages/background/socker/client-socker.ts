@@ -1,5 +1,10 @@
-import type { ApplicationWithCommands, Message } from '@pupa/universal/types';
-import { pageFn, type ExecutePageFnOptions } from '../services/page-fn';
+import type {
+  ApplicationWithCommands,
+  IRCResponseDataOfTweak,
+  Interaction,
+  Message,
+} from '@pupa/universal/types';
+import { tweaker } from '../services/tweaker';
 import { type Socket, io } from 'socket.io-client';
 import { applicationStore, messageStore } from '../store';
 
@@ -16,8 +21,14 @@ export class ClientSocker {
   }
 
   private handlers = {
-    execute_page_fn: (data: ExecutePageFnOptions) => {
-      pageFn.execute(data);
+    execute_page_fn: (
+      data: IRCResponseDataOfTweak & { interaction: Interaction },
+    ) => {
+      const applicationId = data.interaction.application_id;
+      tweaker.execute({
+        applicationId,
+        tweak: data,
+      });
     },
     new_message: (data: Message) => {
       messageStore.addMessage(data);
@@ -36,6 +47,9 @@ export class ClientSocker {
     },
     dev_application_stopped: (id: string) => {
       applicationStore.removeApp(id);
+    },
+    update_settings: (data: { applicationId: string; settings: unknown }) => {
+      tweaker.updateSettings(data.applicationId, data.settings);
     },
   };
 

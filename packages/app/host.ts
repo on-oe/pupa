@@ -2,11 +2,7 @@ import type { Application } from '@pupa/universal/types';
 import ky from 'ky';
 
 export class Host {
-  endpoint: string;
-  constructor(private readonly port: number) {
-    this.port = port;
-    this.endpoint = `http://localhost:${port}`;
-  }
+  constructor() {}
 
   private host = ky.create({
     prefixUrl: 'http://localhost:3000/api/',
@@ -15,12 +11,18 @@ export class Host {
     },
   });
 
-  devStart(app: Partial<Application>) {
+  createApp(app: Partial<Application & { interactionEndpoint: string }>) {
+    return this.host
+      .post('application/create-dev-application', {
+        json: app,
+      })
+      .json<Application>();
+  }
+
+  devStart(app: Application) {
     return this.host
       .post('application/dev-application-started', {
-        json: {
-          application: app,
-        },
+        json: app,
       })
       .json<{ id: string }>();
   }
@@ -40,3 +42,5 @@ export class Host {
     return this.host.post(`application/dev-application-stopped/${id}`).json();
   }
 }
+
+export const host = new Host();

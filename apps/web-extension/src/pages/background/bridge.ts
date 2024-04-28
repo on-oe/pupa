@@ -5,6 +5,8 @@ import {
   currentChannelAtom,
   applicationsAtom,
   messagesAtom,
+  applicationStore,
+  channelStore,
 } from './store';
 import { fetcher } from './services/fetcher';
 import { admin } from './services/admin';
@@ -15,15 +17,6 @@ export const channelContext = {
       .get(channelsAtom)
       .find((channel) => channel.id === id);
     store.set(currentChannelAtom, channel || null);
-  },
-  async addChannel(opt?: { name: string }) {
-    const channel = await fetcher.addChannel(opt);
-    store.set(channelsAtom, (channels) => {
-      channels.unshift(channel);
-      return channels;
-    });
-    store.set(currentChannelAtom, channel);
-    return channel;
   },
   async deleteChannel(id: string) {
     await fetcher.deleteChannel(id);
@@ -58,7 +51,7 @@ bridge.on('loadSidePanel', () => {
 });
 
 bridge.on('addChannel', (opt) => {
-  return channelContext.addChannel(opt);
+  return channelStore.addChannel(opt);
 });
 
 bridge.on('execSlashCommand', (payload) => {
@@ -70,8 +63,8 @@ bridge.on('sendMessage', (payload) => {
   fetcher.sendMessage(payload);
 });
 
-bridge.on('openPage', (payload) => {
-  fetcher.openPage(payload);
+bridge.on('openPage', () => {
+  applicationStore.onOpenPage();
 });
 
 export default bridge;

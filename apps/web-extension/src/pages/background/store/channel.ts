@@ -13,11 +13,14 @@ export const channelStore = {
     const channels = await fetcher.getChannels();
     store.set(channelsAtom, channels);
   },
-  addChannel(channel: Channel) {
+  async addChannel(opt?: { name: string }) {
+    const channel = await fetcher.addChannel(opt);
     store.set(channelsAtom, (channels) => {
       channels.unshift(channel);
       return channels;
     });
+    store.set(currentChannelAtom, channel);
+    return channel;
   },
   deleteChannel(channelId: string) {
     store.set(channelsAtom, (channels) => {
@@ -29,6 +32,9 @@ export const channelStore = {
       store.get(channelsAtom).find((channel) => channel.id === channelId) ||
       null
     );
+  },
+  get currentChanel() {
+    return store.get(currentChannelAtom);
   },
 };
 

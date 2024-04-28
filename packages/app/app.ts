@@ -1,13 +1,26 @@
 import path from 'node:path';
-import { CommandType, InteractionType } from '@pupa/universal/types';
-import OpenAI from 'openai';
+import {
+  InteractionType,
+  type Application,
+  type PageTweak,
+} from '@pupa/universal/types';
 import { InteractionContext } from './interaction';
 import type { Commander } from './command';
-import { Host } from './host';
+import { Host, host } from './host';
 import express, { type Express } from 'express';
 import cors from 'cors';
+import { Volume } from 'memfs';
+import fs from 'node:fs';
+import { createServer } from 'vite';
+import reactPlugin from '@vitejs/plugin-react';
+import type { PageTweakDef } from './tweak';
+import { findAvailablePort } from './utils/port';
+import { rollup } from 'rollup';
+import replacePlugin from '@rollup/plugin-replace';
+import aliasPlugin from '@rollup/plugin-alias';
 
-const llm = new OpenAI();
+const vol = new Volume();
+vol.mkdirSync('/tweak');
 
 interface CreateAppOptions {
   name: string;
@@ -16,127 +29,202 @@ interface CreateAppOptions {
   matches?: string[];
   commanders?: Commander[];
   onMessage?: (interaction: InteractionContext) => void;
-  onPing?: (interaction: InteractionContext) => void;
 }
 
-export function createApp(options: CreateAppOptions) {
-  return new App(options);
+export async function createApp(options: CreateAppOptions) {
+  const app = new App(options);
+  return app;
 }
 
-class App {
-  private commanders = new Map<string, Commander>();
+export class App {
+  private commanders: Map<string, Commander> = new Map();
+  private tweaks: Map<string, PageTweak> = new Map();
+  private port: number = 6700;
+  private server = express();
 
-  private pfCommanders = new Map<string, Commander>();
-
-  private prCommanders = new Map<string, Commander>();
-
-  constructor(private options: CreateAppOptions) {
-    this.options = options;
-    this.options.commanders?.forEach((commander) => {
-      this.attachCommander(commander);
-    });
-  }
-
-  async findCommander(content: string, threshold = 0.8) {
-    const commanders = Array.from(this.commanders.values());
-    const pfCommanders = Array.from(this.pfCommanders.values());
-    const allCommanders = commanders.concat(pfCommanders);
-    const commanderList = allCommanders.map((commander) =>
-      JSON.stringify({
-        name: commander.name,
-        description: commander.description,
-      }),
-    );
-    const commanderPrompt = commanderList.join('\n');
-    const res = await llm.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      response_format: { type: 'json_object' },
-      temperature: 0,
-      messages: [
-        {
-          role: 'system',
-          content: `Please help user to find the commander for the user input: ${content}.\nif user input is not related to any commander, response with json object: {commanderName: null}.\n\n##commanders\n ${commanderPrompt}.\n response with json object: {commanderName: string, score: number}, score is the confidence of the commander.`,
-        },
-      ],
-    });
-    const data = res.choices[0].message.content;
-    if (!data) {
-      return null;
-    }
-    const { commanderName, score } = JSON.parse(data);
-    if (!commanderName || score < threshold) {
-      return null;
-    }
-    return allCommanders.find((commander) => commander.name === commanderName);
+  constructor(private readonly options: CreateAppOptions) {
+    this.initServer();
   }
 
   async serve(
     options: { port?: number; fetch?: (host: Express) => void } = {},
   ) {
-    const { port = 6700 } = options;
+    const { port } = options;
+    if (port) {
+      this.port = port;
+    }
 
-    const app = express();
-    app.use(cors());
-    app.use(express.json());
-    app.use(express.json({ type: 'application/json' }));
-    options.fetch?.(app);
-    await this.loadCommands();
-    const finalPort = await this.run(app, port);
-    await this.served(finalPort);
+    this.port = await findAvailablePort(this.port);
+
+    options.fetch?.(this.server);
+
+    await this.run(this.server);
+
+    const app = await host.createApp({
+      name: this.options.name,
+      description: this.options.description,
+      icon: this.options.icon,
+      tweaks: [],
+      commands: [],
+      interactionEndpoint: `http://localhost:${this.port}`,
+    });
+
+    await this.resolveCommanders();
+    await this.resolveTweaks(app.id);
+
+    await this.served(app);
   }
 
-  private run(app: Express, port: number) {
-    let finalPort = port;
+  private initServer() {
+    const { server } = this;
+    server.use(cors());
+    server.use(express.json());
+    server.use(express.json({ type: 'application/json' }));
+  }
+
+  private async resolveTweaks(applicationId: string) {
+    const { port: appPort } = this;
+    const tweakDefs = new Map<string, PageTweakDef>();
+    const tweakIndex = path.join(process.cwd(), 'tweaks', 'index.ts');
+    if (fs.existsSync(tweakIndex)) {
+      const module = await import(tweakIndex);
+      Object.keys(module).forEach((key) => {
+        const config = module[key];
+        if (!config.input) {
+          throw new Error(`Tweak ${key} must have input`);
+        }
+        tweakDefs.set(key, config);
+      });
+    }
+    for (const key of tweakDefs.keys()) {
+      const def = tweakDefs.get(key)!;
+      const destFilePath = `/tweak/${def.name}.js`;
+      const filePath = path.join(process.cwd(), 'tweaks', def.input);
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`);
+      }
+
+      if (fs.lstatSync(filePath).isDirectory()) {
+        const port = await findAvailablePort(7100);
+        await createServer({
+          configFile: false,
+          root: filePath,
+          define: {
+            'import.meta.env.VITE_APP_HOST': JSON.stringify(
+              `http://localhost:${appPort}`,
+            ),
+          },
+          plugins: [
+            reactPlugin(),
+            replacePlugin({
+              __PUPA_APPLICATION_ID__: applicationId,
+              __PUPA_TWEAK_NAME__: def.name,
+              include: /tweak\/index.js/,
+              preventAssignment: true,
+            }),
+          ],
+          server: {
+            port,
+            hmr: {
+              protocol: 'ws',
+            },
+          },
+        })
+          .then((server) => {
+            return server.listen();
+          })
+          .then((server) => {
+            server.printUrls();
+            const output = `await import('http://localhost:${port}/@vite/client');\nawait import('http://localhost:${port}/@react-refresh').then(({default: RefreshRuntime}) => {RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$ = () => {};window.$RefreshSig$ = () => (type) => type;window.__vite_plugin_react_preamble_installed__ = true;}); await import('http://localhost:${port}/index.tsx');
+            `;
+            vol.writeFileSync(destFilePath, output);
+          })
+          .catch((err) => {
+            console.error(err);
+            process.exit(1);
+          });
+      } else if (filePath.match(/\.ts|js?$/)) {
+        const bundle = await rollup({
+          input: filePath,
+          external: [],
+          plugins: [
+            replacePlugin({
+              __PUPA_APPLICATION_ID__: applicationId,
+              __PUPA_TWEAK_NAME__: def.name,
+              preventAssignment: true,
+            }),
+            aliasPlugin({
+              entries: [
+                {
+                  find: '@pupa/tweak',
+                  replacement: '/Users/boomyao/po/pupa/packages/tweak/index.js',
+                },
+              ],
+            }),
+          ],
+        });
+        const { output } = await bundle.generate({ format: 'esm' });
+        vol.writeFileSync(destFilePath, output[0].code);
+      } else {
+      }
+      this.tweaks.set(def.name, {
+        name: def.name,
+        runAt: def.runAt,
+        once: def.once,
+      });
+    }
+  }
+
+  private async resolveCommanders() {
+    const commandIndex = path.join(process.cwd(), 'commands', 'index.ts');
+    const module = await import(commandIndex);
+    Object.keys(module).forEach((key) => {
+      const commander = module[key];
+      if (this.commanders.has(commander.name)) {
+        throw new Error(`Duplicate commander name: ${commander.name}`);
+      }
+      this.commanders.set(commander.name, commander);
+    });
+  }
+
+  private run(app: Express) {
     return new Promise<number>((resolve, reject) => {
       app.post('*', (req, res) => {
         const ircData = req.body;
-        const interaction = new InteractionContext(ircData, {
-          endpoint: `http://localhost:${finalPort}`,
-        });
+        const interaction = new InteractionContext(ircData);
         this.onInteraction(interaction);
         res.end();
       });
-      app.get(/\/dist\/.*/, (req, res) => {
-        const filePath = path.join(process.cwd(), req.url);
-        res.sendFile(filePath);
+      app.get(/\/tweak\/.*/, (req, res) => {
+        try {
+          const stream = vol.createReadStream(req.path).on('error', (error) => {
+            throw error;
+          });
+          stream.pipe(res);
+        } catch (err) {
+          res.status(404).end();
+        }
       });
 
-      const startServer = (port: number) => {
-        app
-          .listen(port, () => {
-            console.log('App is running on port', port);
-            finalPort = port;
-            resolve(port);
-          })
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .on('error', (err: any) => {
-            if (err.code === 'EADDRINUSE') {
-              console.log(
-                `Port ${port} is already in use, trying port ${port + 1}`,
-              );
-              startServer(port + 1);
-            } else {
-              console.error(`Error starting server: ${err}`);
-              reject(err);
-            }
-          });
-      };
-
-      startServer(port);
+      app
+        .listen(this.port, () => {
+          console.log(`Server is running on http://localhost:${this.port}`);
+          resolve(this.port);
+        })
+        .on('error', (err) => {
+          reject(err);
+        });
     });
   }
 
   private async onInteraction(interaction: InteractionContext) {
     switch (interaction.type) {
-      case InteractionType.PING:
-        this.options.onPing?.(interaction);
-        break;
       case InteractionType.APPLICATION_COMMAND:
-      case InteractionType.PAGE_FUNCTION_MESSAGE:
-      case InteractionType.PAGE_RECYCLE:
         {
-          const commander = this.getCommander(interaction);
-          commander?.execute(interaction);
+          if (interaction.commandName) {
+            const commander = this.commanders.get(interaction.commandName);
+            commander?.execute(interaction);
+          }
         }
         break;
       default:
@@ -144,73 +232,30 @@ class App {
     }
   }
 
-  private getCommander(interaction: InteractionContext) {
-    if (!interaction.commandName) return null;
-    let commander: Commander | undefined;
-    if (interaction.type === InteractionType.PAGE_FUNCTION_MESSAGE) {
-      commander = this.pfCommanders.get(interaction.commandName);
-    } else if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-      commander = this.commanders.get(interaction.commandName);
-    } else if (interaction.type === InteractionType.PAGE_RECYCLE) {
-      commander = this.prCommanders.get(interaction.commandName);
-    }
-    return commander;
-  }
-
-  private async loadCommands() {
-    const commandFilePath = path.join(process.cwd(), 'commands', 'index.ts');
-    const module = await import(commandFilePath);
-    Object.keys(module).forEach((key) => {
-      const commander = module[key];
-      this.attachCommander(commander);
-    });
-  }
-
-  private attachCommander(commander: Commander) {
-    switch (commander.type) {
-      case CommandType.CHAT_INPUT:
-        if (this.commanders.has(commander.name)) {
-          throw new Error(`Duplicate commander name: ${commander.name}`);
-        }
-        this.commanders.set(commander.name, commander);
-        console.log('Loaded slash command:', commander.name);
-        break;
-      case CommandType.PAGE_FUNCTION:
-        if (this.pfCommanders.has(commander.name)) {
-          throw new Error(`Duplicate commander name: ${commander.name}`);
-        }
-        this.pfCommanders.set(commander.name, commander);
-        console.log('Loaded page function:', commander.name);
-        break;
-      case CommandType.PAGE_RECYCLE:
-        if (this.prCommanders.has(commander.name)) {
-          throw new Error(`Duplicate commander name: ${commander.name}`);
-        }
-        this.prCommanders.set(commander.name, commander);
-        console.log('Loaded page recycle:', commander.name);
-        break;
-    }
-  }
-
-  private async served(port: number) {
-    const host = new Host(port);
-    const app = {
-      id: '',
-      name: this.options.name,
-      description: this.options.description,
-      icon: this.options.icon,
-      interactionEndpoint: host.endpoint,
-      commands: Array.from(this.commanders.values()).map((commander) => ({
+  private async served(app: Application) {
+    const { port } = this;
+    const { commanders, tweaks } = this;
+    const host = new Host();
+    Object.assign(app, {
+      interactionEndpoint: `http://localhost:${port}`,
+      commands: Array.from(commanders.values()).map((commander) => ({
         name: commander.name,
         description: commander.description,
         type: commander.type,
         options: commander.options,
       })),
-    };
+      tweaks: Array.from(tweaks.values()).map((tweak) => ({
+        name: tweak.name,
+        runAt: tweak.runAt,
+        once: tweak.once,
+      })),
+    });
     await host.devStart(app);
 
     process.on('exit', () => {
       host.devStop(app.id);
     });
+
+    console.log('synced app info to remote server.');
   }
 }
